@@ -2,355 +2,451 @@
 
 ## 1. 传输约定
 
-### 业务事件帧
+### 1.1 业务事件
 
-- 使用 `event: message`
-- `data` 是一行 JSON
-- 当前 live SSE 业务事件统一包含 `seq`、`type`、`timestamp`
-
-示例：
+业务事件统一使用：
 
 ```text
 event: message
-data: {"seq":3,"type":"run.start","runId":"run_001","chatId":"chat_123","agentKey":"default","timestamp":1707000002000}
+data: {"seq":3,"type":"run.start","timestamp":1707000002,"runId":"run_001","chatId":"chat_123","agentKey":"auto"}
 ```
 
-### 心跳帧
+说明：
+
+- `data` 必须是一行 JSON。
+- 实时业务事件统一包含 `seq`、`type`、`timestamp`。
+
+### 1.2 Heartbeat
+
+SSE 传输层保活事件；由注释帧标准化而来，不属于业务 JSON 事件。
 
 ```text
-: heartbeat
+event: heartbeat
 ```
 
-心跳是 SSE 注释帧，不是业务 JSON 事件。
+| 项 | 说明 |
+| --- | --- |
+| `wire format` | `event: heartbeat` |
+| `data` | 无 |
 
-### 流结束帧
+### 1.3 Done Sentinel
+
+流结束时追加的传输层终止帧，不是业务事件，也不会写入历史 `events`。
 
 ```text
-event: message
-data: [DONE]
+data:[DONE]
 ```
 
-`[DONE]` 是传输层结束哨兵，不是业务事件，也不会进入历史 `events`。
+| 项 | 说明 |
+| --- | --- |
+| `wire format` | `data:[DONE]` |
+| `data` | 非 JSON 文本 |
 
 ## 2. Base Event
 
-所有 live 业务事件共享的基础字段：
+所有事件类共享的基础字段：
 
 | 字段 | 说明 |
 | --- | --- |
-| `seq` | 客户端可见的实时事件序号 |
+| `seq` | 唯一序列号；实时业务事件统一包含 |
 | `type` | 事件类型 |
-| `timestamp` | 事件创建时间戳（毫秒） |
+| `timestamp` | 事件创建时间戳 |
+| `rawEvent` | 调试用途原始事件对象，可选 |
+
+这里列的都是会真实出现在 SSE 流里的事件；公开 HTTP API 不要求与流事件形成 1:1 命名映射。
 
 ## 3. 事件分层
 
 当前实现需要区分三类内容：
 
-- live SSE 事件：会通过 `POST /api/query` 实时发给客户端
-- snapshot / persisted 事件：只进入历史持久化，不走 live SSE
-- 传输层帧：心跳与 `[DONE]`，不属于业务 JSON 事件
+- live SSE 事件：会通过 `POST /api/query` 实时发给客户端。
+- snapshot / persisted 事件：只进入历史持久化，不走 live SSE。
+- 传输层帧：heartbeat 与 `[DONE]`，不属于业务 JSON 事件。
 
-## 4. Live SSE 事件
+## 4. Request 回看事件
 
-### 4.1 请求与运行生命周期
+### 4.1 `request.query`
 
-#### `request.query`
-
-对应 `POST /api/query` 发起时的回看事件。
-
-常见字段：
-
-- `requestId`
-- `runId`
-- `chatId`
-- `role`
-- `message`
-
-说明：当前事件 payload 不应等同于 HTTP request body；只有实现实际写入流中的字段才属于 live SSE 协议。
-
-#### `chat.start`
-
-表示 chat 在本次请求中被新建。
+请求动作事件：`request.query`，对应 API `POST /api/query`。
 
 | 字段 | 说明 |
 | --- | --- |
-| `chatId` | 会话 ID |
+| `type` | 固定为 `"request.query"` |
+| `requestId` | 前端生成，用于幂等、重试和链路追踪 |
+| `chatId` | 聊天会话 ID，可由前端生成或由网关创建后回传 |
+| `agentKey` | 可选；如 `auto`、`default`、`agent_researcher` |
+| `teamId` | 可选 |
+| `role` | `"user" \| "system" \| "assistant" \| "developer" \| "other"` |
+| `message` | 用户消息 |
+| `references` | `Reference[]`，可选 |
+| `params` | 结构化参数，可选 |
+| `scene` | `{url,title}`，可选 |
+| `stream` | 可选；当前网关仍固定返回 SSE |
+| `hidden` | 可选 |
+
+说明：当前事件 payload 不应等同于 HTTP request body；只有实现实际写入流中的字段才属于 live SSE 协议。
+
+### 4.2 `request.upload`
+
+请求动作事件：`request.upload`，对应 API `POST /api/upload`。这是统一事件记录中的内部对象；公开 HTTP 请求本身是 `multipart/form-data`，不是 JSON `upload` 对象。
+
+| 字段 | 说明 |
+| --- | --- |
+| `type` | 固定为 `"request.upload"` |
+| `requestId` | 前端生成 |
+| `chatId` | chat ID，可选；缺省则网关创建 |
+| `upload.type` | `"file" \| "image"` |
+| `upload.name` | 文件名 |
+| `upload.sizeBytes` | 文件大小 |
+| `upload.mimeType` | MIME 类型 |
+| `upload.sha256` | 可选 |
+
+### 4.3 `request.submit`
+
+请求动作事件：`request.submit`，对应 API `POST /api/submit`。这是运行流里的回看事件，不等于公开 HTTP body。
+
+| 字段 | 说明 |
+| --- | --- |
+| `type` | 固定为 `"request.submit"` |
+| `requestId` | 前端生成 |
+| `chatId` | chat ID |
+| `runId` | 当前 run |
+| `toolId` | 提交给哪个工具 |
+| `payload` | 表单值、按钮值、选择结果等 |
+| `viewId` | 可选 |
+
+### 4.4 `request.steer`
+
+请求动作事件：`request.steer`，对应 API `POST /api/steer`。这是运行流里的回看事件，用于记录运行中注入的追加指令；它不是 `/api/steer` 的完整 HTTP body schema。
+
+| 字段 | 说明 |
+| --- | --- |
+| `type` | 固定为 `"request.steer"` |
+| `requestId` | 可选 |
+| `chatId` | chat ID |
+| `runId` | 当前 run |
+| `steerId` | 当前 steer |
+| `message` | 追加指令 |
+| `role` | 固定为 `"user"` |
+
+### 4.5 `request.interrupt` 不存在
+
+- 当前流层不会发独立的 `request.interrupt`。
+- `POST /api/interrupt` 的结果直接用 `run.cancel` 表达。
+
+## 5. Chat 与 Plan 事件
+
+### 5.1 `chat.start`
+
+开始聊天会话的事件。
+
+| 字段 | 说明 |
+| --- | --- |
+| `chatId` | 会话唯一标识 |
 | `chatName` | 会话名称 |
 
-#### `run.start`
+说明：当前实时 SSE 只发会话开始事件；名称变更不会额外输出一条独立的实时会话更新事件。
+
+### 5.2 `plan.update`
+
+更新任务计划的事件。
+
+| 字段 | 说明 |
+| --- | --- |
+| `planId` | 计划唯一标识 |
+| `chatId` | 关联 chat |
+| `plan` | 计划列表，包含多个任务对象 |
+
+说明：当前实时 SSE 统一使用计划更新事件表达首次创建与后续修改，不再拆成单独“创建”事件。
+
+## 6. Run 事件
+
+### 6.1 `run.start`
 
 | 字段 | 说明 |
 | --- | --- |
 | `runId` | 运行实例 ID |
-| `chatId` | 所属 chat |
-| `agentKey` | 运行使用的 agent |
-
-#### `run.complete`
-
-| 字段 | 说明 |
-| --- | --- |
-| `runId` | 已完成 run |
-| `finishReason` | 完成原因；取值由当前运行流决定 |
-
-#### `run.cancel`
-
-表示 run 被取消或中断。
-
-| 字段 | 说明 |
-| --- | --- |
-| `runId` | 被取消的 run |
-
-#### `run.error`
-
-| 字段 | 说明 |
-| --- | --- |
-| `runId` | 出错 run |
-| `error` | 规范化错误对象 |
-
-#### `request.submit`
-
-对应 `POST /api/submit` 在流中的回看事件。
-
-常见字段：
-
-- `requestId`
-- `chatId`
-- `runId`
-- `toolId`
-- `payload`
-
-说明：live SSE 里当前使用 `toolId` 字段名；HTTP 提交接口使用 `awaitingId`。
-
-#### `request.steer`
-
-对应 `POST /api/steer` 的回看事件。
-
-常见字段：
-
-- `requestId`
-- `chatId`
-- `runId`
-- `steerId`
-- `message`
-- `role`，固定为 `user`
-
-说明：当前不存在独立的 `request.interrupt`；`POST /api/interrupt` 的流内效果由 `run.cancel` 表达。
-
-### 4.2 Task / Plan / Artifact
-
-#### `plan.update`
-
-表示 chat 级计划状态更新。
-
-| 字段 | 说明 |
-| --- | --- |
-| `planId` | 计划 ID |
 | `chatId` | 关联 chat |
-| `plan` | 当前计划内容 |
+| `agentKey` | 当前运行的智能体 key |
 
-说明：当前实现只实际发出 `plan.update`，不把 `plan.create` 作为现行 live 事件。
-
-#### `task.start`
+### 6.2 `run.complete`
 
 | 字段 | 说明 |
 | --- | --- |
-| `taskId` | 任务 ID |
-| `runId` | 所属 run |
+| `runId` | 已完成的运行实例 ID |
+| `finishReason` | 完成原因，缺省为 `end_turn` |
+
+### 6.3 `run.cancel`
+
+运行被取消或中断时的实时事件。常见来源是 `POST /api/interrupt`。
+
+| 字段 | 说明 |
+| --- | --- |
+| `runId` | 被取消的运行实例 ID |
+
+### 6.4 `run.error`
+
+| 字段 | 说明 |
+| --- | --- |
+| `runId` | 出错的运行实例 ID |
+| `error` | 错误信息 |
+
+## 7. Task 事件
+
+### 7.1 `task.start`
+
+| 字段 | 说明 |
+| --- | --- |
+| `taskId` | 任务唯一标识 |
+| `runId` | 所属运行实例 ID |
 | `taskName` | 任务名称 |
 | `description` | 任务描述 |
 
-#### `task.complete`
-
-仅表示任务完成，核心字段为 `taskId`。
-
-#### `task.cancel`
-
-仅表示任务取消，核心字段为 `taskId`。
-
-#### `task.fail`
+### 7.2 `task.complete`
 
 | 字段 | 说明 |
 | --- | --- |
-| `taskId` | 任务 ID |
-| `error` | 规范化错误对象 |
+| `taskId` | 完成的任务 ID |
 
-#### `artifact.publish`
-
-向当前 chat 资产池发布单个产物。
+### 7.3 `task.cancel`
 
 | 字段 | 说明 |
 | --- | --- |
-| `artifactId` | 产物 ID |
-| `chatId` | 所属 chat |
-| `runId` | 来源 run |
-| `artifact` | 产物对象 |
+| `taskId` | 被取消的任务 ID |
 
-### 4.3 Reasoning
-
-用于承载推理过程的实时增量。
-
-- `reasoning.start`
-- `reasoning.delta`
-- `reasoning.end`
-
-常见字段：
+### 7.4 `task.fail`
 
 | 字段 | 说明 |
 | --- | --- |
-| `reasoningId` | 推理段标识 |
-| `runId` | 所属 run，仅 `start` 保证出现 |
-| `taskId` | 可选，所属 task |
-| `reasoningLabel` | 可选，推理标签 |
-| `delta` | 增量文本，仅 `reasoning.delta` |
+| `taskId` | 失败的任务 ID |
+| `error` | 错误信息 |
 
-### 4.4 Content
+## 8. Reasoning 事件
 
-用于承载对用户可见的正文输出。
-
-- `content.start`
-- `content.delta`
-- `content.end`
-
-常见字段：
+### 8.1 `reasoning.start`
 
 | 字段 | 说明 |
 | --- | --- |
-| `contentId` | 正文段标识 |
-| `runId` | 所属 run，仅 `start` 保证出现 |
-| `taskId` | 可选，所属 task |
-| `delta` | 增量文本，仅 `content.delta` |
+| `reasoningId` | 推理唯一标识 |
+| `runId` | 运行实例 ID |
+| `taskId` | 可选；任务 ID |
 
-### 4.5 Tool
-
-用于表示工具调用过程。
-
-- `tool.start`
-- `tool.args`
-- `tool.end`
-- `tool.result`
-
-#### `tool.start` 常见字段
+### 8.2 `reasoning.delta`
 
 | 字段 | 说明 |
 | --- | --- |
-| `toolId` | 工具调用 ID |
-| `runId` | 所属 run |
-| `taskId` | 可选 |
+| `reasoningId` | 推理唯一标识 |
+| `delta` | 推理增量内容 |
+
+### 8.3 `reasoning.end`
+
+| 字段 | 说明 |
+| --- | --- |
+| `reasoningId` | 推理唯一标识 |
+
+### 8.4 `reasoning.snapshot`
+
+主要用于历史记录；不是当前 `/api/query` 实时流主路径。
+
+| 字段 | 说明 |
+| --- | --- |
+| `reasoningId` | 推理唯一标识 |
+| `runId` | 运行实例 ID |
+| `taskId` | 可选；任务 ID |
+| `text` | 推理全文 |
+
+## 9. Content 事件
+
+### 9.1 `content.start`
+
+| 字段 | 说明 |
+| --- | --- |
+| `contentId` | 正文唯一标识 |
+| `runId` | 运行实例 ID |
+| `taskId` | 可选；任务 ID |
+
+### 9.2 `content.delta`
+
+| 字段 | 说明 |
+| --- | --- |
+| `contentId` | 正文唯一标识 |
+| `delta` | 正文增量内容 |
+
+### 9.3 `content.end`
+
+| 字段 | 说明 |
+| --- | --- |
+| `contentId` | 正文唯一标识 |
+
+### 9.4 `content.snapshot`
+
+主要用于历史记录；不是当前 `/api/query` 实时流主路径。
+
+| 字段 | 说明 |
+| --- | --- |
+| `contentId` | 正文唯一标识 |
+| `runId` | 运行实例 ID |
+| `taskId` | 可选；任务 ID |
+| `text` | 正文全文 |
+
+## 10. Tool 事件
+
+### 10.1 `tool.start`
+
+工具开始事件；前端工具在最终输出中会补充 viewport 相关字段。
+
+| 字段 | 说明 |
+| --- | --- |
+| `toolId` | 工具唯一标识 |
+| `runId` | 运行实例 ID |
 | `toolName` | 工具名称 |
-| `toolLabel` | 可选，展示名 |
-| `toolDescription` | 可选 |
+| `taskId` | 可选；任务 ID |
+| `toolType` | 可选；前端工具常见为 `html/qlc/dqlc` |
+| `toolLabel` | 可选；展示名 |
+| `toolDescription` | 可选；展示描述 |
+| `viewportKey` | 仅前端工具会出现 |
+| `toolTimeout` | 仅前端工具会出现，单位毫秒 |
 
-#### `tool.args`
+### 10.2 `tool.args`
 
 | 字段 | 说明 |
 | --- | --- |
-| `toolId` | 工具调用 ID |
-| `delta` | 参数增量文本 |
+| `toolId` | 工具唯一标识 |
+| `delta` | 工具参数增量 |
 | `chunkIndex` | 同一 `toolId` 下的分片序号 |
 
-#### `tool.result`
+### 10.3 `tool.end`
 
 | 字段 | 说明 |
 | --- | --- |
-| `toolId` | 工具调用 ID |
-| `result` | 工具结果 |
+| `toolId` | 工具唯一标识 |
 
-关键说明：
+### 10.4 `tool.snapshot`
 
-- 当前 `tool.start` 不应写入未由实现提供的 `toolType`、`viewportKey`、`toolTimeout`
-- 某些前端交互会在 `tool.start` 后看到 `awaiting.ask` / `awaiting.payload`
-- `clientVisible=false` 的工具，其 `tool.*` 事件可能被 normalizer 抑制，不会出现在客户端 live SSE
-
-### 4.6 Awaiting / 前端交互
-
-#### `awaiting.ask`
-
-告诉前端当前 run 进入等待用户交互状态。
-
-常见字段：
-
-- `awaitingId`
-- `viewportType`
-- `viewportKey`
-- `mode`
-- `toolTimeout`
-- `runId`
-- `questions`（仅部分模式出现）
-
-#### `awaiting.payload`
-
-向前端提供待回答问题列表。
+主要用于历史记录；不是当前 `/api/query` 实时流主路径。
 
 | 字段 | 说明 |
 | --- | --- |
-| `awaitingId` | 当前 awaiting ID |
-| `questions` | 问题列表 |
+| `toolId` | 工具唯一标识 |
+| `runId` | 运行实例 ID |
+| `toolName` | 工具名称 |
+| `taskId` | 可选；任务 ID |
+| `toolType` | 可选 |
+| `toolLabel` | 可选 |
+| `toolDescription` | 可选 |
+| `viewportKey` | 前端工具可能出现 |
+| `toolTimeout` | 前端工具可能出现 |
+| `arguments` | 工具参数快照 |
 
-关键说明：
-
-- `clientVisible=false` 的工具，其 `awaiting.ask` / `awaiting.payload` 也可能被抑制
-- `POST /api/submit` 对应的流内回看事件是 `request.submit`，不是额外的 awaiting 专用提交事件
-
-### 4.7 Action
-
-用于表示 action 调用过程。
-
-- `action.start`
-- `action.args`
-- `action.end`
-- `action.result`
-
-常见字段：
+### 10.5 `tool.result`
 
 | 字段 | 说明 |
 | --- | --- |
-| `actionId` | 动作 ID |
-| `runId` | 所属 run，仅 `start` 保证出现 |
-| `taskId` | 可选 |
+| `toolId` | 工具唯一标识 |
+| `result` | 工具运行结果 |
+
+### 10.6 提交边界
+
+- 前端交互提交走 `POST /api/submit`。
+- 运行流里会记录为 `request.submit`。
+- 不会额外发一条独立的“工具参数事件”。
+
+## 11. Artifact 事件
+
+### 11.1 `artifact.publish`
+
+向当前 chat 资产池发布产物的事件；每个产物对应一条 `artifact.publish`。
+
+| 字段 | 说明 |
+| --- | --- |
+| `artifactId` | 产物唯一标识 |
+| `chatId` | 所属 chat；产物进入该 chat 的资产集合 |
+| `runId` | 来源 run；用于溯源，不表示归属层级 |
+| `artifact` | 精简产物对象，仅包含 `type/name/mimeType/sizeBytes/url/sha256` |
+
+说明：
+
+- 一次调用 `_artifact_publish_` 时，`artifacts[]` 里有几个产物，就会出现几条 `artifact.publish`。
+- 常见顺序是 `tool.start -> tool.args -> tool.end -> tool.result -> artifact.publish`。
+- 如果一次调用里有多个产物，`tool.result` 后会连续出现多条 `artifact.publish`。
+
+## 12. Action 事件
+
+### 12.1 `action.start`
+
+| 字段 | 说明 |
+| --- | --- |
+| `actionId` | 动作唯一标识 |
+| `runId` | 运行实例 ID |
 | `actionName` | 动作名称 |
+| `taskId` | 可选；任务 ID |
 | `description` | 动作描述 |
-| `delta` | 参数增量，仅 `action.args` |
-| `result` | 动作结果，仅 `action.result` |
 
-## 5. Snapshot / Persisted 事件
+### 12.2 `action.args`
 
-下列事件会进入历史持久化，但不会通过 `/api/query` live SSE 发给客户端：
+| 字段 | 说明 |
+| --- | --- |
+| `actionId` | 动作唯一标识 |
+| `delta` | 动作参数增量 |
 
-- `reasoning.snapshot`
-- `content.snapshot`
-- `tool.snapshot`
-- `action.snapshot`
+### 12.3 `action.end`
 
-这些事件通常出现在 `GET /api/chat` 的 `events` 中，用于保存完整文本或完整参数。
+| 字段 | 说明 |
+| --- | --- |
+| `actionId` | 动作唯一标识 |
 
-## 6. 当前不存在的现行事件
+### 12.4 `action.snapshot`
 
-以下名称不应作为当前 live SSE 协议的一部分：
+主要用于历史记录；不是当前 `/api/query` 实时流主路径。
 
-- `request.upload`
-- `source.snapshot`
-- `plan.create`
+| 字段 | 说明 |
+| --- | --- |
+| `actionId` | 动作唯一标识 |
+| `runId` | 运行实例 ID |
+| `actionName` | 动作名称 |
+| `taskId` | 可选；任务 ID |
+| `description` | 动作描述 |
+| `arguments` | 动作参数 |
 
-## 7. 层级关系速览
+### 12.5 `action.result`
+
+| 字段 | 说明 |
+| --- | --- |
+| `actionId` | 动作唯一标识 |
+| `result` | 动作执行结果 |
+
+## 13. Source 事件
+
+### 13.1 `source.snapshot`
+
+源信息块的快照事件；当前仍未实现实时 SSE 输出。
+
+| 字段 | 说明 |
+| --- | --- |
+| `icon` | 来源图标 |
+| `title` | 来源标题 |
+| `url` | 来源地址 |
+
+## 14. 层级关系速览
 
 ```text
 chat
-├── plan.update
+├── plan
 ├── run
 │   ├── task
-│   │   ├── reasoning (live) / reasoning.snapshot (history)
-│   │   ├── content (live) / content.snapshot (history)
-│   │   ├── tool (live) / tool.snapshot (history)
-│   │   └── action (live) / action.snapshot (history)
+│   │   ├── reasoning
+│   │   ├── content
+│   │   ├── tool
+│   │   └── action
 │   └── artifact.publish
-└── request.* / awaiting.*
+└── source(snapshot, optional)
 ```
 
-## 8. 需要重点记住的边界
+## 15. 需要重点记住的边界
 
-- 当前唯一 SSE endpoint 是 `POST /api/query`
+- `query` 对应 `request.query`
 - `submit` 对应 `request.submit`
 - `steer` 对应 `request.steer`
 - `interrupt` 对应 `run.cancel`
-- `: heartbeat` 和 `[DONE]` 都是传输层概念，不是业务 JSON 事件
+- `heartbeat` 和 `data:[DONE]` 都是传输层概念，不是业务 JSON 事件
 - snapshot 事件属于历史持久化，不属于 live SSE
