@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AGW UI Interaction Protocol</title>
+  <meta name="description" content="AGW UI Interaction Protocol 首页，包含正式版 Basic 时序图与可重播动画预览。">
+  <style>
+    :root {
+      --bg: #f5efe5;
+      --bg-accent: #fff8f0;
+      --panel: rgba(255, 252, 247, 0.92);
+      --panel-strong: #ffffff;
+      --text: #1f2937;
+      --muted: #5b6472;
+      --line: rgba(148, 163, 184, 0.28);
+      --primary: #9a3412;
+      --primary-strong: #7c2d12;
+      --secondary: #164e63;
+      --shadow: 0 24px 60px rgba(15, 23, 42, 0.12);
+      --radius-xl: 28px;
+      --radius-lg: 20px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "IBM Plex Sans", "Avenir Next", "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(234, 88, 12, 0.14), transparent 28%),
+        radial-gradient(circle at top right, rgba(22, 78, 99, 0.18), transparent 34%),
+        linear-gradient(180deg, var(--bg-accent), var(--bg));
+    }
+
+    a {
+      color: inherit;
+    }
+
+    .shell {
+      width: min(1200px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 32px 0 48px;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(280px, 380px) minmax(0, 1fr);
+      gap: 24px;
+      align-items: start;
+    }
+
+    .panel {
+      background: var(--panel);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow);
+    }
+
+    .copy {
+      padding: 28px;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: rgba(154, 52, 18, 0.08);
+      color: var(--primary-strong);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 16px 0 14px;
+      font-size: clamp(2.3rem, 4vw, 4.2rem);
+      line-height: 0.95;
+      letter-spacing: -0.05em;
+    }
+
+    .lede {
+      margin: 0 0 18px;
+      font-size: 16px;
+      line-height: 1.7;
+      color: var(--muted);
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin: 20px 0 18px;
+    }
+
+    .button,
+    button {
+      appearance: none;
+      border: 0;
+      cursor: pointer;
+      text-decoration: none;
+      font: inherit;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 48px;
+      padding: 0 18px;
+      border-radius: 999px;
+      transition: transform 160ms ease, box-shadow 160ms ease, background-color 160ms ease, color 160ms ease;
+    }
+
+    .button:hover,
+    button:hover {
+      transform: translateY(-1px);
+    }
+
+    .button.primary {
+      background: linear-gradient(135deg, var(--primary), #c2410c);
+      color: #fffaf4;
+      box-shadow: 0 12px 24px rgba(154, 52, 18, 0.22);
+    }
+
+    button.secondary {
+      background: rgba(22, 78, 99, 0.08);
+      color: var(--secondary);
+      border: 1px solid rgba(22, 78, 99, 0.18);
+    }
+
+    .mini-note {
+      margin: 0;
+      font-size: 13px;
+      line-height: 1.6;
+      color: var(--muted);
+    }
+
+    .meta {
+      display: grid;
+      gap: 12px;
+      margin-top: 22px;
+    }
+
+    .meta-card {
+      padding: 16px 18px;
+      border-radius: var(--radius-lg);
+      background: rgba(255, 255, 255, 0.7);
+      border: 1px solid rgba(148, 163, 184, 0.2);
+    }
+
+    .meta-card strong {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+
+    .meta-card p {
+      margin: 0;
+      font-size: 14px;
+      line-height: 1.6;
+      color: var(--muted);
+    }
+
+    .visual {
+      padding: 18px;
+    }
+
+    .visual-frame {
+      overflow: hidden;
+      border-radius: calc(var(--radius-xl) - 8px);
+      background: linear-gradient(180deg, #fffefc, #fff8f1);
+      border: 1px solid rgba(148, 163, 184, 0.18);
+    }
+
+    object {
+      display: block;
+      width: 100%;
+      min-height: 720px;
+      background: #f8fafc;
+    }
+
+    .section {
+      margin-top: 24px;
+      padding: 24px 28px;
+    }
+
+    .section h2 {
+      margin: 0 0 12px;
+      font-size: 24px;
+      letter-spacing: -0.03em;
+    }
+
+    .link-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .link-card {
+      padding: 18px;
+      border-radius: var(--radius-lg);
+      background: rgba(255, 255, 255, 0.78);
+      border: 1px solid rgba(148, 163, 184, 0.22);
+      text-decoration: none;
+    }
+
+    .link-card strong {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 16px;
+    }
+
+    .link-card span {
+      display: block;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    @media (max-width: 980px) {
+      .hero {
+        grid-template-columns: 1fr;
+      }
+
+      object {
+        min-height: 560px;
+      }
+
+      .link-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .shell {
+        width: min(100% - 20px, 1200px);
+        padding-top: 16px;
+      }
+
+      .copy,
+      .visual,
+      .section {
+        padding: 18px;
+      }
+
+      object {
+        min-height: 420px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <div class="panel copy">
+        <span class="eyebrow">Official Basic</span>
+        <h1>AGW UI Interaction Protocol</h1>
+        <p class="lede">首页主图切换为正式版 <code>02 AGW Basic Sequence</code>。这里直接展示可播放的基础多轮 Query 时序图，并补了一个按钮，方便从头重新播放整段动画。</p>
+        <div class="actions">
+          <a class="button primary" href="./docs/interaction-sequences.md">查看全部时序图</a>
+          <button class="secondary" type="button" id="replay-basic">重新播放动画</button>
+        </div>
+        <p class="mini-note">实现方式是重新加载内嵌 SVG，所以无需改动图内动画定义，后续替换图稿也可以继续复用这套按钮逻辑。</p>
+        <div class="meta">
+          <div class="meta-card">
+            <strong>这张图说明什么</strong>
+            <p>首次 <code>POST /api/query</code> 会创建 chat，后续 turn 复用 <code>chatId</code>，但每次都会开启新的 <code>run</code> 和新的 SSE 响应。</p>
+          </div>
+          <div class="meta-card">
+            <strong>正式资源路径</strong>
+            <p><code>assets/diagrams/02-agw-seq-basic.svg</code> 现已承接这版动画稿，文档里的 Basic 引用会自动跟上。</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel visual">
+        <div class="visual-frame">
+          <object
+            id="basic-sequence-diagram"
+            type="image/svg+xml"
+            data="./assets/diagrams/02-agw-seq-basic.svg"
+            aria-label="02 AGW Basic Sequence animated diagram"
+          >
+            <img src="./assets/diagrams/02-agw-seq-basic.svg" alt="02 AGW Basic Sequence">
+          </object>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel section">
+      <h2>继续阅读</h2>
+      <div class="link-grid">
+        <a class="link-card" href="./README.md">
+          <strong>README</strong>
+          <span>仓库导航、核心图入口和协议边界说明。</span>
+        </a>
+        <a class="link-card" href="./docs/architecture.md">
+          <strong>Architecture</strong>
+          <span>查看角色分层、部署边界和交互总览图。</span>
+        </a>
+        <a class="link-card" href="./docs/resources.md">
+          <strong>Resources</strong>
+          <span>查看 SDK、前端测试项目和 Demo 入口占位。</span>
+        </a>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const diagram = document.getElementById("basic-sequence-diagram");
+    const replayButton = document.getElementById("replay-basic");
+    const diagramSrc = "./assets/diagrams/02-agw-seq-basic.svg";
+
+    function replayDiagram() {
+      diagram.data = `${diagramSrc}?replay=${Date.now()}`;
+    }
+
+    replayButton.addEventListener("click", replayDiagram);
+  </script>
+</body>
+</html>

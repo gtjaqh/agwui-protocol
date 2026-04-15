@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1500" width="1600" height="1500">
+    <rect width="100%" height="100%" fill="#fafafa"/>
+
+    <defs>
+        <marker id="arrow-right-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="0">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#2563eb"/>
+        </marker>
+        <marker id="arrow-left-green" viewBox="0 0 10 10" refX="1" refY="5" markerWidth="6" markerHeight="6" orient="0">
+            <path d="M 10 0 L 0 5 L 10 10 z" fill="#059669"/>
+        </marker>
+        <marker id="arrow-left-purple" viewBox="0 0 10 10" refX="1" refY="5" markerWidth="6" markerHeight="6" orient="0">
+            <path d="M 10 0 L 0 5 L 10 10 z" fill="#7c3aed"/>
+        </marker>
+    </defs>
+
+    <line x1="300" y1="80" x2="300" y2="1440" stroke="#d1d5db" stroke-width="2" stroke-dasharray="4 4"/>
+    <line x1="1300" y1="80" x2="1300" y2="1440" stroke="#d1d5db" stroke-width="2" stroke-dasharray="4 4"/>
+
+    <rect x="220" y="40" width="160" height="40" rx="6" fill="#ffffff" stroke="#e5e7eb" stroke-width="2"/>
+    <text x="300" y="65" text-anchor="middle" font-family="ui-sans-serif, system-ui, sans-serif" font-size="14" font-weight="600" fill="#374151">Frontend</text>
+
+    <rect x="1220" y="40" width="160" height="40" rx="6" fill="#ffffff" stroke="#e5e7eb" stroke-width="2"/>
+    <text x="1300" y="65" text-anchor="middle" font-family="ui-sans-serif, system-ui, sans-serif" font-size="14" font-weight="600" fill="#374151">Agent Platform</text>
+
+    <text x="800" y="120" text-anchor="middle" font-family="ui-sans-serif, system-ui, sans-serif" font-size="12" font-weight="bold" fill="#9ca3af">TURN 1</text>
+
+    <line x1="300" y1="180" x2="1300" y2="180" stroke="#2563eb" stroke-width="2" marker-end="url(#arrow-right-blue)"/>
+    <text x="800" y="172" text-anchor="middle" font-family="ui-sans-serif, system-ui, sans-serif" font-size="14" font-weight="600" fill="#2563eb">POST /api/query</text>
+    <text x="800" y="200" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="13" fill="#4b5563" stroke="#fafafa" stroke-width="4" stroke-linejoin="round" paint-order="stroke">{"agentKey":"ak","message":"用一句话解释 AGW 事件流"}</text>
+
+    <line x1="1300" y1="260" x2="300" y2="260" stroke="#059669" stroke-width="2" marker-end="url(#arrow-left-green)"/>
+    <text x="800" y="252" text-anchor="middle" font-family="ui-sans-serif, system-ui, sans-serif" font-size="14" font-weight="600" fill="#059669">HTTP 200 OK</text>
+    <text x="800" y="280" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="13" fill="#4b5563" stroke="#fafafa" stroke-width="4" stroke-linejoin="round" paint-order="stroke">Content-Type: text/event-stream</text>
+
+    <line x1="1300" y1="340" x2="300" y2="340" stroke="#7c3aed" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#arrow-left-purple)"/>
+    <text x="800" y="332" text-anchor="middle" font-family="ui-sans-serif, system-ui, sans-serif" font-size="14" font-weight="600" fill="#7c3aed">chat.start</text>
+    <text x="800" y="360" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="13" fill="#4b5563" stroke="#fafafa" stroke-width="4" stroke-linejoin="round" paint-order="stroke">data: {"type":"chat.start","chatId":"7b09c3b3-8e6a-4df2-a7c4-3a6c2a1dc2c1","chatName":"Minimal QA"}</text>
+
+    <line x1="1300" y1="420" x2="300" y2="420" stroke="#7c3aed" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#arrow-left-purple)"/>
+    <text x="800" y="412" text-anchor="middle" font-family="ui-sans-serif, system-ui, sans-serif" font-size="14" font-weight="600" fill="#7c3aed">run.start</text>
+    <text x="800" y="440" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="13" fill="#4b5563" stroke="#fafafa" stroke-width="4" stroke-linejoin="round" paint-order="stroke">data: {"type":"run.start","runId":"mnzh6h44","chatId":"7b09c3b3-8e6a-4df2-a7c4-3a6c2a1dc2c1","agentKey":"ak"}</text>
+
+    <line x1="1300" y1="500" x2="300" y2="500" stroke="#7c3aed" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#arrow-left-purple)"/>
+    <text x="800" y="492" text-anchor="middle" font-family="ui-sans-serif, system-ui, sans-serif" font-size="14" font-weight="600" fill="#7c3aed">content.start</text>
+    <text x="800" y="520" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="13" fill="#4b5563" stroke="#fafafa" stroke-width="4" stroke-linejoin="round" paint-order="stroke">data: {"type":"content.start","contentId":"cnt_mnzh6h44_01","runId":"mnzh6h44"}</text>
+
+    <line x1="1300" y1="580" x2="300" y2="580" stroke="#7c3aed" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#arrow-left-purple)"/>
+    <text x="800" y="572" text-anchor="middle" font-family="ui-sans-serif, system-ui, sans-serif" font-size="14" font-weight="600" fill="#7c3aed">content.delta</text>
+    <text x="800" y="600" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="13" fill="#4b5563" stroke="#fafafa" stroke-width="4" stroke-linejoin="round" paint-order="stroke">data: {"type":"content.delta","contentId":"cnt_mnzh6h44_01","delta":"AGW 把 HTTP 请求与 live SSE 事件流分开建模。"}</text>
+
+    <line x1="1300" y1="660" x2="300" y2="660" stroke="#7c3aed" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#arrow-left-purple)"/>
+    <text x="800" y="652" text-anchor="middle" font-family="ui-sans-serif, system-ui, sans-serif" font-size="14" font-weight="600" fill="#7c3aed">content.end</text>
+    <text x="800" y="680" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="13" fill="#4b5563" stroke="#fafafa" stroke-width="4" stroke-linejoin="round" paint-order="stroke">data: {"type":"content.end","contentId":"cnt_mnzh6h44_01","runId":"mnzh6h44"}</text>
+
+    <line x1="1300" y1="740" x2="300" y2="740" stroke="#7c3aed" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#arrow-left-purple)"/>
+    <text x="800" y="732" text-anchor="middle" font-family="ui-sans-serif, system-ui, sans-serif" font-size="14" font-weight="600" fill="#7c3aed">run.complete</text>
+    <text x="800" y="760" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="13" fill="#4b5563" stroke="#fafafa" stroke-width="4" stroke-linejoin="round" paint-order="stroke">data: {"type":"run.complete","runId":"mnzh6h44","finishReason":"stop"}</text>
+
+    <text x="800" y="840" text-anchor="middle" font-family="ui-sans-serif, system-ui, sans-serif" font-size="12" font-weight="bold" fill="#9ca3af">TURN 2</text>
+
+    <line x1="300" y1="900" x2="1300" y2="900" stroke="#2563eb" stroke-width="2" marker-end="url(#arrow-right-blue)"/>
+    <text x="800" y="892" text-anchor="middle" font-family="ui-sans-serif, system-ui, sans-serif" font-size="14" font-weight="600" fill="#2563eb">POST /api/query</text>
+    <text x="800" y="920" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="13" fill="#4b5563" stroke="#fafafa" stroke-width="4" stroke-linejoin="round" paint-order="stroke">{"chatId":"7b09c3b3-8e6a-4df2-a7c4-3a6c2a1dc2c1","agentKey":"ak","message":"继续，总结三点"}</text>
+
+    <line x1="1300" y1="980" x2="300" y2="980" stroke="#059669" stroke-width="2" marker-end="url(#arrow-left-green)"/>
+    <text x="800" y="972" text-anchor="middle" font-family="ui-sans-serif, system-ui, sans-serif" font-size="14" font-weight="600" fill="#059669">HTTP 200 OK</text>
+    <text x="800" y="1000" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="13" fill="#4b5563" stroke="#fafafa" stroke-width="4" stroke-linejoin="round" paint-order="stroke">Content-Type: text/event-stream</text>
+
+    <line x1="1300" y1="1060" x2="300" y2="1060" stroke="#7c3aed" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#arrow-left-purple)"/>
+    <text x="800" y="1052" text-anchor="middle" font-family="ui-sans-serif, system-ui, sans-serif" font-size="14" font-weight="600" fill="#7c3aed">run.start</text>
+    <text x="800" y="1080" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="13" fill="#4b5563" stroke="#fafafa" stroke-width="4" stroke-linejoin="round" paint-order="stroke">data: {"type":"run.start","runId":"mnzh6h88","chatId":"7b09c3b3-8e6a-4df2-a7c4-3a6c2a1dc2c1","agentKey":"ak"}</text>
+
+    <line x1="1300" y1="1140" x2="300" y2="1140" stroke="#7c3aed" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#arrow-left-purple)"/>
+    <text x="800" y="1132" text-anchor="middle" font-family="ui-sans-serif, system-ui, sans-serif" font-size="14" font-weight="600" fill="#7c3aed">content.start</text>
+    <text x="800" y="1160" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="13" fill="#4b5563" stroke="#fafafa" stroke-width="4" stroke-linejoin="round" paint-order="stroke">data: {"type":"content.start","contentId":"cnt_mnzh6h88_01","runId":"mnzh6h88"}</text>
+
+    <line x1="1300" y1="1220" x2="300" y2="1220" stroke="#7c3aed" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#arrow-left-purple)"/>
+    <text x="800" y="1212" text-anchor="middle" font-family="ui-sans-serif, system-ui, sans-serif" font-size="14" font-weight="600" fill="#7c3aed">content.delta</text>
+    <text x="800" y="1240" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="13" fill="#4b5563" stroke="#fafafa" stroke-width="4" stroke-linejoin="round" paint-order="stroke">data: {"type":"content.delta","contentId":"cnt_mnzh6h88_01","delta":"三点总结：1) Query 触发 run；2) 事件通过 SSE 回到前端；3) 同一个 chat 可以连续产生多个 run。"}</text>
+
+    <line x1="1300" y1="1300" x2="300" y2="1300" stroke="#7c3aed" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#arrow-left-purple)"/>
+    <text x="800" y="1292" text-anchor="middle" font-family="ui-sans-serif, system-ui, sans-serif" font-size="14" font-weight="600" fill="#7c3aed">content.end</text>
+    <text x="800" y="1320" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="13" fill="#4b5563" stroke="#fafafa" stroke-width="4" stroke-linejoin="round" paint-order="stroke">data: {"type":"content.end","contentId":"cnt_mnzh6h88_01","runId":"mnzh6h88"}</text>
+
+    <line x1="1300" y1="1380" x2="300" y2="1380" stroke="#7c3aed" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#arrow-left-purple)"/>
+    <text x="800" y="1372" text-anchor="middle" font-family="ui-sans-serif, system-ui, sans-serif" font-size="14" font-weight="600" fill="#7c3aed">run.complete</text>
+    <text x="800" y="1400" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="13" fill="#4b5563" stroke="#fafafa" stroke-width="4" stroke-linejoin="round" paint-order="stroke">data: {"type":"run.complete","runId":"mnzh6h88","finishReason":"stop"}</text>
+</svg>

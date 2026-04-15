@@ -1,0 +1,140 @@
+<svg width="980" height="1010" viewBox="0 0 980 1010" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">02B AGW Steer and Interrupt Sequence</title>
+  <desc id="desc">运行中 steer 和 interrupt 的控制时序图，展示它们如何作用在原 SSE 流上。</desc>
+
+  <defs>
+    <filter id="card-shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="10" stdDeviation="16" flood-color="#0f172a" flood-opacity="0.08" />
+      <feDropShadow dx="0" dy="1" stdDeviation="1.5" flood-color="#0f172a" flood-opacity="0.06" />
+    </filter>
+
+    <marker id="arrow-req" markerWidth="7" markerHeight="5" refX="6" refY="2.5" orient="auto">
+      <polygon points="0 0, 7 2.5, 0 5" fill="#2563eb" />
+    </marker>
+    <marker id="arrow-steer" markerWidth="7" markerHeight="5" refX="6" refY="2.5" orient="auto">
+      <polygon points="0 0, 7 2.5, 0 5" fill="#8b5cf6" />
+    </marker>
+    <marker id="arrow-data" markerWidth="7" markerHeight="5" refX="6" refY="2.5" orient="auto">
+      <polygon points="0 0, 7 2.5, 0 5" fill="#10b981" />
+    </marker>
+    <marker id="arrow-cancel" markerWidth="7" markerHeight="5" refX="6" refY="2.5" orient="auto">
+      <polygon points="0 0, 7 2.5, 0 5" fill="#ef4444" />
+    </marker>
+    <marker id="arrow-end" markerWidth="7" markerHeight="5" refX="6" refY="2.5" orient="auto">
+      <polygon points="0 0, 7 2.5, 0 5" fill="#06b6d4" />
+    </marker>
+
+    <style>
+      .page { fill: #f8fafc; }
+      .card { fill: #ffffff; rx: 24; ry: 24; filter: url(#card-shadow); }
+      .actor-box { fill: #ffffff; stroke-width: 2; rx: 8; ry: 8; }
+      .actor-box.frontend { stroke: #3b82f6; }
+      .actor-box.platform { stroke: #10b981; }
+      .actor-text { font: 600 16px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; text-anchor: middle; letter-spacing: 0.4px; }
+      .actor-text.frontend { fill: #3b82f6; }
+      .actor-text.platform { fill: #10b981; }
+      .lifeline { stroke: #cbd5e1; stroke-width: 2; stroke-dasharray: 6 6; }
+      .activation { fill: #f1f5f9; stroke: #94a3b8; stroke-width: 1; rx: 4; ry: 4; }
+      .group { fill: #f8fafc; stroke: #e2e8f0; stroke-width: 1; rx: 12; ry: 12; }
+      .group-title { font: 700 14px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #475569; letter-spacing: 1px; }
+      .title { font: 800 28px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #1e293b; text-anchor: middle; }
+      .subtitle { font: 500 14px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #64748b; text-anchor: middle; }
+      .label { font: 600 14px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+      .label-req { fill: #2563eb; }
+      .label-steer { fill: #8b5cf6; }
+      .label-data { fill: #10b981; }
+      .label-cancel { fill: #ef4444; }
+      .label-end { fill: #06b6d4; }
+      .code-text { font: 12px "SFMono-Regular", Consolas, "Liberation Mono", monospace; fill: #64748b; }
+      .code-highlight { fill: #1e293b; font-weight: 600; }
+      .arrow-req { stroke: #2563eb; stroke-width: 2; fill: none; }
+      .stream-line { fill: none; stroke-width: 2; stroke-dasharray: 8 8; }
+      .stream-steer { stroke: #8b5cf6; }
+      .stream-data { stroke: #10b981; }
+      .stream-cancel { stroke: #ef4444; }
+      .stream-end { stroke: #06b6d4; }
+      .note-panel { fill: #f8fafc; stroke: #e2e8f0; stroke-width: 1; rx: 16; ry: 16; }
+      .note-title { font: 700 15px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #334155; }
+      .note-text { font: 500 13px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; fill: #475569; }
+    </style>
+  </defs>
+
+  <rect class="page" x="0" y="0" width="980" height="1010" />
+  <rect class="card" x="30" y="30" width="920" height="950" />
+
+  <text x="490" y="82" class="title">02B AGW Steer and Interrupt</text>
+  <text x="490" y="108" class="subtitle">运行中控制分支 · 不新开 SSE，控制结果都回到原始事件流</text>
+
+  <rect x="120" y="165" width="740" height="240" class="group" />
+  <text x="145" y="193" class="group-title">RUN STARTED</text>
+
+  <rect x="120" y="430" width="740" height="210" class="group" />
+  <text x="145" y="458" class="group-title">STEER DURING RUN</text>
+
+  <rect x="120" y="665" width="740" height="180" class="group" />
+  <text x="145" y="693" class="group-title">INTERRUPT DURING RUN</text>
+
+  <line x1="220" y1="140" x2="220" y2="900" class="lifeline" />
+  <line x1="760" y1="140" x2="760" y2="900" class="lifeline" />
+
+  <rect x="140" y="100" width="160" height="40" class="actor-box frontend" />
+  <text x="220" y="126" class="actor-text frontend">Frontend</text>
+
+  <rect x="680" y="100" width="160" height="40" class="actor-box platform" />
+  <text x="760" y="126" class="actor-text platform">Agent Platform</text>
+
+  <line x1="220" y1="245" x2="752" y2="245" class="arrow-req" marker-end="url(#arrow-req)" />
+  <text x="245" y="234" class="label label-req">POST /api/query</text>
+  <text x="315" y="256" class="code-text">{"message":"总结这段文档"}</text>
+
+  <rect x="752" y="245" width="16" height="555" class="activation" />
+
+  <line x1="752" y1="290" x2="220" y2="290" class="arrow-req" marker-end="url(#arrow-req)" />
+  <text x="728" y="279" class="label label-req" text-anchor="end">HTTP 200 OK</text>
+  <text x="728" y="300" class="code-text" text-anchor="end">Content-Type: text/event-stream</text>
+
+  <line x1="752" y1="350" x2="220" y2="350" class="stream-line stream-steer" marker-end="url(#arrow-steer)" />
+  <text x="728" y="339" class="label label-steer" text-anchor="end">event: run.start</text>
+  <text x="728" y="361" class="code-text" text-anchor="end">data: {"runId":"<tspan class="code-highlight">run_live_001</tspan>"}</text>
+
+  <line x1="752" y1="390" x2="220" y2="390" class="stream-line stream-data" marker-end="url(#arrow-data)" />
+  <text x="728" y="379" class="label label-data" text-anchor="end">event: message.delta</text>
+  <text x="728" y="401" class="code-text" text-anchor="end">data: {"content":"我先概括核心结构..."}</text>
+
+  <line x1="220" y1="505" x2="752" y2="505" class="arrow-req" marker-end="url(#arrow-req)" />
+  <text x="245" y="494" class="label label-req">POST /api/steer</text>
+  <text x="292" y="516" class="code-text">{"runId":"<tspan class="code-highlight">run_live_001</tspan>","message":"更简短一点"}</text>
+
+  <line x1="752" y1="545" x2="220" y2="545" class="arrow-req" marker-end="url(#arrow-req)" />
+  <text x="728" y="534" class="label label-req" text-anchor="end">HTTP ack</text>
+  <text x="728" y="556" class="code-text" text-anchor="end">控制请求成功接收</text>
+
+  <line x1="752" y1="590" x2="220" y2="590" class="stream-line stream-steer" marker-end="url(#arrow-steer)" />
+  <text x="728" y="579" class="label label-steer" text-anchor="end">event: request.steer</text>
+  <text x="728" y="601" class="code-text" text-anchor="end">data: {"message":"更简短一点"}</text>
+
+  <line x1="752" y1="630" x2="220" y2="630" class="stream-line stream-data" marker-end="url(#arrow-data)" />
+  <text x="728" y="619" class="label label-data" text-anchor="end">event: message.delta</text>
+  <text x="728" y="641" class="code-text" text-anchor="end">data: {"content":"简版总结如下..."}</text>
+
+  <line x1="220" y1="735" x2="752" y2="735" class="arrow-req" marker-end="url(#arrow-req)" />
+  <text x="245" y="724" class="label label-req">POST /api/interrupt</text>
+  <text x="338" y="746" class="code-text">{"runId":"<tspan class="code-highlight">run_live_001</tspan>"}</text>
+
+  <line x1="752" y1="775" x2="220" y2="775" class="arrow-req" marker-end="url(#arrow-req)" />
+  <text x="728" y="764" class="label label-req" text-anchor="end">HTTP ack</text>
+  <text x="728" y="786" class="code-text" text-anchor="end">终止请求成功接收</text>
+
+  <line x1="752" y1="815" x2="220" y2="815" class="stream-line stream-cancel" marker-end="url(#arrow-cancel)" />
+  <text x="728" y="804" class="label label-cancel" text-anchor="end">event: run.cancel</text>
+  <text x="728" y="826" class="code-text" text-anchor="end">data: {"reason":"user_interrupt"}</text>
+
+  <line x1="752" y1="855" x2="220" y2="855" class="stream-line stream-end" marker-end="url(#arrow-end)" />
+  <text x="728" y="844" class="label label-end" text-anchor="end">data: [DONE]</text>
+  <text x="728" y="866" class="code-text" text-anchor="end">SSE closes after cancel</text>
+
+  <rect x="120" y="870" width="740" height="70" class="note-panel" />
+  <text x="145" y="898" class="note-title">图上要点</text>
+  <text x="145" y="922" class="note-text">- `request.steer` 只会插入原始 SSE 流；不会为 steer 新建第二条事件流。</text>
+  <text x="495" y="922" class="note-text">- `interrupt` 不产生 `request.interrupt`，流里看到的是 `run.cancel -&gt; [DONE]`。</text>
+</svg>
