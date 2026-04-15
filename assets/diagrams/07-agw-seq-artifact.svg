@@ -1,38 +1,31 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1400 960" width="100%" height="100%" style="background-color: #FFFFFF; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 780" width="100%" height="100%" style="background-color: #FFFFFF; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
   <defs>
-    <marker id="arrow-request" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#5A86C8"/></marker>
     <marker id="arrow-tool" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#D6A05E"/></marker>
     <marker id="arrow-artifact" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#D5A774"/></marker>
     <style>
       .lifeline { stroke: #E5E7EB; stroke-width: 2; stroke-dasharray: 4 4; }
       .entity { fill: #FFFFFF; stroke: #374151; stroke-width: 2; rx: 6; }
       .entity-text { fill: #374151; font-size: 14px; font-weight: 700; text-anchor: middle; }
-      .stage { fill: #8A8175; font-size: 12px; font-weight: 700; text-anchor: middle; letter-spacing: 1px; }
       .label { font-size: 13px; font-weight: 700; text-anchor: middle; }
       .code { fill: #6B7280; font-size: 12px; font-family: monospace; text-anchor: middle; }
-      .request { stroke: #5A86C8; fill: none; stroke-width: 2; }
       .tool { stroke: #D6A05E; fill: none; stroke-width: 2; stroke-dasharray: 6 4; }
       .artifact { stroke: #D5A774; fill: none; stroke-width: 2; stroke-dasharray: 6 4; }
-      .label-request { fill: #5A86C8; }
       .label-tool { fill: #D6A05E; }
       .label-artifact { fill: #D5A774; }
     </style>
   </defs>
 
-  <line class="lifeline" x1="110" y1="80" x2="110" y2="920" />
-  <line class="lifeline" x1="700" y1="80" x2="700" y2="920" />
-  <line class="lifeline" x1="1290" y1="80" x2="1290" y2="920" />
-  <rect class="entity" x="30" y="40" width="160" height="40" /><text class="entity-text" x="110" y="65">Frontend</text>
-  <rect class="entity" x="620" y="40" width="160" height="40" /><text class="entity-text" x="700" y="65">Agent Platform</text>
-  <rect class="entity" x="1210" y="40" width="160" height="40" /><text class="entity-text" x="1290" y="65">Run-Agent</text>
-  <text class="stage" x="700" y="110">ARTIFACT</text>
+  <line class="lifeline" x1="100" y1="80" x2="100" y2="740" />
+  <line class="lifeline" x1="1100" y1="80" x2="1100" y2="740" />
+  <rect class="entity" x="20" y="40" width="160" height="40" />
+  <text class="entity-text" x="100" y="65">Frontend</text>
+  <rect class="entity" x="1020" y="40" width="160" height="40" />
+  <text class="entity-text" x="1100" y="65">Agent Platform</text>
 
-  <g opacity="0"><animate attributeName="opacity" begin="0s" dur="0.25s" from="0" to="1" fill="freeze"/><path class="request" d="M110 160 L700 160" marker-end="url(#arrow-request)"/><text class="label label-request" x="405" y="152">POST /api/query</text><text class="code" x="405" y="176">{"agentKey":"ak","message":"生成最终交付报告和摘要文件"}</text></g>
-  <g opacity="0"><animate attributeName="opacity" begin="0.8s" dur="0.25s" from="0" to="1" fill="freeze"/><path class="request" d="M700 250 L110 250" marker-end="url(#arrow-request)"/><text class="label label-request" x="405" y="242">HTTP 200 OK</text><text class="code" x="405" y="266">Content-Type: text/event-stream</text></g>
-  <g opacity="0"><animate attributeName="opacity" begin="1.6s" dur="0.25s" from="0" to="1" fill="freeze"/><path class="tool" d="M1290 340 L110 340" marker-end="url(#arrow-tool)"/><text class="label label-tool" x="700" y="332">[SSE] tool.start (工具开始，准备发布产物)</text><text class="code" x="700" y="356">data: {"type":"tool.start","toolId":"tool_publish_1","runId":"mnzmv63s","toolName":"_artifact_publish_"}</text></g>
-  <g opacity="0"><animate attributeName="opacity" begin="2.4s" dur="0.25s" from="0" to="1" fill="freeze"/><path class="tool" d="M1290 430 L110 430" marker-end="url(#arrow-tool)"/><text class="label label-tool" x="700" y="422">[SSE] tool.args (工具参数里声明多个产物)</text><text class="code" x="700" y="446">data: {"type":"tool.args","toolId":"tool_publish_1","delta":"{\"artifacts\":[{\"path\":\"/workspace/reports/final-report.md\"},{\"path\":\"/workspace/reports/summary.md\"}]}"}</text></g>
-  <g opacity="0"><animate attributeName="opacity" begin="3.2s" dur="0.25s" from="0" to="1" fill="freeze"/><path class="tool" d="M1290 520 L110 520" marker-end="url(#arrow-tool)"/><text class="label label-tool" x="700" y="512">[SSE] tool.end (工具参数结束)</text><text class="code" x="700" y="536">data: {"type":"tool.end","toolId":"tool_publish_1"}</text></g>
-  <g opacity="0"><animate attributeName="opacity" begin="4.0s" dur="0.25s" from="0" to="1" fill="freeze"/><path class="tool" d="M1290 610 L110 610" marker-end="url(#arrow-tool)"/><text class="label label-tool" x="700" y="602">[SSE] tool.result (工具结果先完成)</text><text class="code" x="700" y="626">data: {"type":"tool.result","toolId":"tool_publish_1","result":"{\"ok\":true,\"artifacts\":[\"asset_001\",\"asset_002\"]}"}</text></g>
-  <g opacity="0"><animate attributeName="opacity" begin="4.8s" dur="0.25s" from="0" to="1" fill="freeze"/><path class="artifact" d="M1290 700 L110 700" marker-end="url(#arrow-artifact)"/><text class="label label-artifact" x="700" y="692">[SSE] artifact.publish (发布第一个产物)</text><text class="code" x="700" y="716">data: {"type":"artifact.publish","artifactId":"asset_001","chatId":"chat_artifact_001","runId":"mnzmv63s","artifact":{"type":"file","name":"final-report.md"}}</text></g>
-  <g opacity="0"><animate attributeName="opacity" begin="5.6s" dur="0.25s" from="0" to="1" fill="freeze"/><path class="artifact" d="M1290 790 L110 790" marker-end="url(#arrow-artifact)"/><text class="label label-artifact" x="700" y="782">[SSE] artifact.publish (发布第二个产物)</text><text class="code" x="700" y="806">data: {"type":"artifact.publish","artifactId":"asset_002","chatId":"chat_artifact_001","runId":"mnzmv63s","artifact":{"type":"file","name":"summary.md"}}</text></g>
+  <g opacity="0"><animate attributeName="opacity" begin="0s" dur="0.25s" from="0" to="1" fill="freeze"/><path class="tool" d="M1100 160 L100 160" marker-end="url(#arrow-tool)"/><text class="label label-tool" x="600" y="152">[SSE] tool.start (工具开始，准备发布产物)</text><text class="code" x="600" y="176">data: {"type":"tool.start","toolId":"tool_publish_1","runId":"mnzmv63s","toolName":"_artifact_publish_"}</text></g>
+  <g opacity="0"><animate attributeName="opacity" begin="0.8s" dur="0.25s" from="0" to="1" fill="freeze"/><path class="tool" d="M1100 250 L100 250" marker-end="url(#arrow-tool)"/><text class="label label-tool" x="600" y="242">[SSE] tool.args (工具参数里声明多个产物)</text><text class="code" x="600" y="266">data: {"type":"tool.args","toolId":"tool_publish_1","delta":"{\"artifacts\":[{\"path\":\"/workspace/reports/final-report.md\"},{\"path\":\"/workspace/reports/summary.md\"}]}"}</text></g>
+  <g opacity="0"><animate attributeName="opacity" begin="1.6s" dur="0.25s" from="0" to="1" fill="freeze"/><path class="tool" d="M1100 340 L100 340" marker-end="url(#arrow-tool)"/><text class="label label-tool" x="600" y="332">[SSE] tool.end (工具参数结束)</text><text class="code" x="600" y="356">data: {"type":"tool.end","toolId":"tool_publish_1"}</text></g>
+  <g opacity="0"><animate attributeName="opacity" begin="2.4s" dur="0.25s" from="0" to="1" fill="freeze"/><path class="tool" d="M1100 430 L100 430" marker-end="url(#arrow-tool)"/><text class="label label-tool" x="600" y="422">[SSE] tool.result (工具结果完成后开始发布产物)</text><text class="code" x="600" y="446">data: {"type":"tool.result","toolId":"tool_publish_1","result":"{\"ok\":true,\"artifacts\":[\"asset_001\",\"asset_002\"]}"}</text></g>
+  <g opacity="0"><animate attributeName="opacity" begin="3.2s" dur="0.25s" from="0" to="1" fill="freeze"/><path class="artifact" d="M1100 520 L100 520" marker-end="url(#arrow-artifact)"/><text class="label label-artifact" x="600" y="512">[SSE] artifact.publish (发布第一个产物)</text><text class="code" x="600" y="536">data: {"type":"artifact.publish","artifactId":"asset_001","chatId":"chat_artifact_001","runId":"mnzmv63s","artifact":{"type":"file","name":"final-report.md"}}</text></g>
+  <g opacity="0"><animate attributeName="opacity" begin="4.0s" dur="0.25s" from="0" to="1" fill="freeze"/><path class="artifact" d="M1100 610 L100 610" marker-end="url(#arrow-artifact)"/><text class="label label-artifact" x="600" y="602">[SSE] artifact.publish (发布第二个产物)</text><text class="code" x="600" y="626">data: {"type":"artifact.publish","artifactId":"asset_002","chatId":"chat_artifact_001","runId":"mnzmv63s","artifact":{"type":"file","name":"summary.md"}}</text></g>
 </svg>

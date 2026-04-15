@@ -1,48 +1,33 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 1140" width="100%" height="100%" style="background-color: #FFFFFF; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 740" width="100%" height="100%" style="background-color: #FFFFFF; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
   <defs>
     <marker id="arrow-request" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#5A86C8"/></marker>
-    <marker id="arrow-chat" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#6B92BF"/></marker>
     <marker id="arrow-run" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#4476AD"/></marker>
     <marker id="arrow-content" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#7AB9A8"/></marker>
-    <marker id="arrow-end" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#8A8175"/></marker>
     <style>
       .lifeline { stroke: #E5E7EB; stroke-width: 2; stroke-dasharray: 4 4; }
       .entity { fill: #FFFFFF; stroke: #374151; stroke-width: 2; rx: 6; }
       .entity-text { fill: #374151; font-size: 14px; font-weight: 700; text-anchor: middle; }
-      .stage { fill: #8A8175; font-size: 12px; font-weight: 700; text-anchor: middle; letter-spacing: 1px; }
       .label { font-size: 13px; font-weight: 700; text-anchor: middle; }
       .code { fill: #6B7280; font-size: 12px; font-family: monospace; text-anchor: middle; }
       .req { stroke: #5A86C8; fill: none; stroke-width: 2; }
-      .chat { stroke: #6B92BF; fill: none; stroke-width: 2; stroke-dasharray: 6 4; }
       .run { stroke: #4476AD; fill: none; stroke-width: 2; stroke-dasharray: 6 4; }
       .content { stroke: #7AB9A8; fill: none; stroke-width: 2; stroke-dasharray: 6 4; }
-      .end { stroke: #8A8175; fill: none; stroke-width: 2; stroke-dasharray: 6 4; }
       .label-req { fill: #5A86C8; }
-      .label-chat { fill: #6B92BF; }
       .label-run { fill: #4476AD; }
       .label-content { fill: #7AB9A8; }
-      .label-end { fill: #8A8175; }
     </style>
   </defs>
 
-  <line class="lifeline" x1="100" y1="80" x2="100" y2="1100" />
-  <line class="lifeline" x1="1100" y1="80" x2="1100" y2="1100" />
+  <line class="lifeline" x1="100" y1="80" x2="100" y2="700" />
+  <line class="lifeline" x1="1100" y1="80" x2="1100" y2="700" />
   <rect class="entity" x="20" y="40" width="160" height="40" />
   <text class="entity-text" x="100" y="65">Frontend</text>
   <rect class="entity" x="1020" y="40" width="160" height="40" />
   <text class="entity-text" x="1100" y="65">Agent Platform</text>
 
-  <text class="stage" x="600" y="110">TURN 1</text>
-  <g opacity="0"><animate attributeName="opacity" begin="0s" dur="0.25s" from="0" to="1" fill="freeze"/><path class="req" d="M100 160 L1100 160" marker-end="url(#arrow-request)"/><text class="label label-req" x="600" y="152">POST /api/query</text><text class="code" x="600" y="176">{"agentKey":"ak","message":"帮我写一份很长的协议说明"}</text></g>
-  <g opacity="0"><animate attributeName="opacity" begin="0.8s" dur="0.25s" from="0" to="1" fill="freeze"/><path class="req" d="M1100 250 L100 250" marker-end="url(#arrow-request)"/><text class="label label-req" x="600" y="242">HTTP 200 OK</text><text class="code" x="600" y="266">Content-Type: text/event-stream</text></g>
-  <g opacity="0"><animate attributeName="opacity" begin="1.6s" dur="0.25s" from="0" to="1" fill="freeze"/><path class="chat" d="M1100 340 L100 340" marker-end="url(#arrow-chat)"/><text class="label label-chat" x="600" y="332">[SSE] chat.start (新会话开始，chatId 是 uuid)</text><text class="code" x="600" y="356">data: {"type":"chat.start","chatId":"chat_live_002","chatName":"AGW Protocol Compare"}</text></g>
-  <g opacity="0"><animate attributeName="opacity" begin="2.4s" dur="0.25s" from="0" to="1" fill="freeze"/><path class="run" d="M1100 430 L100 430" marker-end="url(#arrow-run)"/><text class="label label-run" x="600" y="422">[SSE] run.start (运行开始，runId 是新的执行标识)</text><text class="code" x="600" y="446">data: {"type":"run.start","runId":"mnzmv31p","chatId":"chat_live_002","agentKey":"ak"}</text></g>
-  <g opacity="0"><animate attributeName="opacity" begin="3.2s" dur="0.25s" from="0" to="1" fill="freeze"/><path class="content" d="M1100 520 L100 520" marker-end="url(#arrow-content)"/><text class="label label-content" x="600" y="512">[SSE] content.start (正文开始，contentId 是由 runId 组合出来)</text><text class="code" x="600" y="536">data: {"type":"content.start","contentId":"mnzmv31p_r_1","runId":"mnzmv31p"}</text></g>
-  <g opacity="0"><animate attributeName="opacity" begin="4.0s" dur="0.25s" from="0" to="1" fill="freeze"/><path class="content" d="M1100 610 L100 610" marker-end="url(#arrow-content)"/><text class="label label-content" x="600" y="602">[SSE] content.delta (正文还在持续输出)</text><text class="code" x="600" y="626">data: {"type":"content.delta","contentId":"mnzmv31p_r_1","delta":"先从 Query、Submit、Steer、Interrupt 的边界开始说明。"}</text></g>
-
-  <text class="stage" x="600" y="710" opacity="0"><animate attributeName="opacity" begin="4.8s" dur="0.25s" from="0" to="1" fill="freeze"/>TURN 2</text>
-  <g opacity="0"><animate attributeName="opacity" begin="5.0s" dur="0.25s" from="0" to="1" fill="freeze"/><path class="req" d="M100 780 L1100 780" marker-end="url(#arrow-request)"/><text class="label label-req" x="600" y="772">POST /api/interrupt</text><text class="code" x="600" y="796">{"runId":"mnzmv31p","message":"先停止当前回答，我要改需求。"}</text></g>
-  <g opacity="0"><animate attributeName="opacity" begin="5.8s" dur="0.25s" from="0" to="1" fill="freeze"/><path class="req" d="M1100 870 L100 870" marker-end="url(#arrow-request)"/><text class="label label-req" x="600" y="862">HTTP ack (终止请求成功接收)</text><text class="code" x="600" y="886">{"accepted":true,"status":"accepted","runId":"mnzmv31p"}</text></g>
-  <g opacity="0"><animate attributeName="opacity" begin="6.6s" dur="0.25s" from="0" to="1" fill="freeze"/><path class="run" d="M1100 960 L100 960" marker-end="url(#arrow-run)"/><text class="label label-run" x="600" y="952">[SSE] run.cancel (中断结果在流层体现为 run.cancel)</text><text class="code" x="600" y="976">data: {"type":"run.cancel","runId":"mnzmv31p"}</text></g>
-  <g opacity="0"><animate attributeName="opacity" begin="7.4s" dur="0.25s" from="0" to="1" fill="freeze"/><path class="end" d="M1100 1050 L100 1050" marker-end="url(#arrow-end)"/><text class="label label-end" x="600" y="1042">[SSE] [DONE] (SSE 收尾结束)</text><text class="code" x="600" y="1066">data: [DONE]</text></g>
+  <g opacity="0"><animate attributeName="opacity" begin="0s" dur="0.25s" from="0" to="1" fill="freeze"/><path class="content" d="M1100 160 L100 160" marker-end="url(#arrow-content)"/><text class="label label-content" x="600" y="152">[SSE] content.start (运行中的正文段已经开始)</text><text class="code" x="600" y="176">data: {"type":"content.start","contentId":"mnzmv31p_r_1","runId":"mnzmv31p"}</text></g>
+  <g opacity="0"><animate attributeName="opacity" begin="0.7s" dur="0.25s" from="0" to="1" fill="freeze"/><path class="content" d="M1100 250 L100 250" marker-end="url(#arrow-content)"/><text class="label label-content" x="600" y="242">[SSE] content.delta (正文仍在持续输出)</text><text class="code" x="600" y="266">data: {"type":"content.delta","contentId":"mnzmv31p_r_1","delta":"先从 Query、Submit、Steer、Interrupt 的边界开始说明。"}</text></g>
+  <g opacity="0"><animate attributeName="opacity" begin="1.4s" dur="0.25s" from="0" to="1" fill="freeze"/><path class="req" d="M100 340 L1100 340" marker-end="url(#arrow-request)"/><text class="label label-req" x="600" y="332">POST /api/interrupt</text><text class="code" x="600" y="356">{"runId":"mnzmv31p","message":"先停止当前回答，我要改需求。"}</text></g>
+  <g opacity="0"><animate attributeName="opacity" begin="2.1s" dur="0.25s" from="0" to="1" fill="freeze"/><path class="req" d="M1100 430 L100 430" marker-end="url(#arrow-request)"/><text class="label label-req" x="600" y="422">HTTP ack (终止请求成功接收)</text><text class="code" x="600" y="446">{"accepted":true,"status":"accepted","runId":"mnzmv31p"}</text></g>
+  <g opacity="0"><animate attributeName="opacity" begin="2.8s" dur="0.25s" from="0" to="1" fill="freeze"/><path class="run" d="M1100 520 L100 520" marker-end="url(#arrow-run)"/><text class="label label-run" x="600" y="512">[SSE] run.cancel (中断结果在原始事件流里体现为 run.cancel)</text><text class="code" x="600" y="536">data: {"type":"run.cancel","runId":"mnzmv31p"}</text></g>
 </svg>

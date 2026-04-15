@@ -24,9 +24,9 @@
 
 这张图单独展开运行中的 steer 控制分支：
 
-- `POST /api/steer -> HTTP ack -> request.steer`
-- `request.steer` 插入原始 SSE 流，不新开第二条事件流
-- 原流继续输出正文并正常 `run.complete`
+- 图从运行中已有的 `content.start` 开始，不展示 `/api/query` 建流阶段
+- `POST /api/steer -> HTTP ack` 之后，原正文先 `content.end`，再插入 `request.steer`
+- 随后在同一条原始 SSE 流里开启新的 `content.start`，并正常 `run.complete`
 
 ## 04 Interrupt
 
@@ -34,9 +34,10 @@
 
 这张图单独展开运行中的 interrupt 控制分支：
 
-- `POST /api/interrupt -> HTTP ack -> run.cancel -> [DONE]`
+- 图从运行中已有的 `content.start` 开始，不展示 `/api/query` 建流阶段
+- `POST /api/interrupt -> HTTP ack -> run.cancel`
 - 流里不会出现 `request.interrupt`
-- 中断收尾通过 `run.cancel` 和 `[DONE]` 表达
+- `[DONE]` 属于通用传输层收尾，不在这张细分图里单独展开
 
 ## 05 Question
 
@@ -47,7 +48,7 @@
 - `awaiting.ask` 先声明等待态
 - `questions` 通过 `awaiting.payload` 下发
 - `POST /api/submit` 的 HTTP 字段名是 `awaitingId`
-- 流内 `request.submit` 当前仍使用 `toolId`
+- 流内 `request.submit` 当前仍使用 `toolId`，并继续在同一条 SSE 流中体现
 
 ## 06 Approval
 
@@ -58,17 +59,21 @@
 - `tool.args -> tool.end -> awaiting.ask`
 - `questions` 直接位于 `awaiting.ask` 顶层
 - approval 没有 `awaiting.payload`
-- `request.submit` 仍回到同一主流继续执行
+- `request.submit` 与后续 `tool.result` 仍继续在同一条 SSE 流中体现
 
 ## 07 Artifact
 
 ![07 AGW Artifact Sequence](../assets/diagrams/07-agw-seq-artifact.svg)
 
-一次工具调用可以在 `tool.result` 之后连续发出多条 `artifact.publish`。
+这张图只画运行中的 artifact 分支：
+
+- 图从运行中的 `tool.start` 开始，不展示 `/api/query` 建流阶段
+- `tool.start -> tool.args -> tool.end -> tool.result`
+- 一次工具调用可以在 `tool.result` 之后连续发出多条 `artifact.publish`
 
 ## 统一边界
 
-- 默认主体是 `Frontend / Agent Platform / Run-Agent`
+- 默认主体是 `Frontend / Agent Platform`
 - Gateway 只是兼容部署模式，不是协议必须角色
 - 不画 `reasoning.snapshot`、`content.snapshot`、`tool.snapshot`、`action.snapshot`
 - 不画不存在的 `request.interrupt`

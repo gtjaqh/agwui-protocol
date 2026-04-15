@@ -12,7 +12,6 @@
     .node { stroke-width: 2; rx: 14; ry: 14; }
     .front { fill: #d9eefb; stroke: #19607e; }
     .platform { fill: #e8f4e8; stroke: #2e7d32; }
-    .run { fill: #fff3d6; stroke: #a36f00; }
     .note { fill: #f4e6dc; stroke: #8f5f3d; }
     .accent { fill: #ede7fb; stroke: #6a4fb3; }
     .title { font: 700 28px "Helvetica Neue", Arial, sans-serif; fill: #1f2a30; }
@@ -29,23 +28,18 @@
   <text class="title" x="52" y="58">01 AGW Sequence Overview</text>
   <text class="small" x="52" y="88">协议默认主体是 Frontend 与 Agent Platform；Gateway 只是兼容部署模式之一。</text>
   <text class="subtitle" x="98" y="145">Frontend</text>
-  <text class="subtitle" x="432" y="145">Agent Platform</text>
-  <text class="subtitle" x="848" y="145">Run-Agent</text>
+  <text class="subtitle" x="662" y="145">Agent Platform</text>
   <line class="lane" x1="170" y1="170" x2="170" y2="610" />
-  <line class="lane" x1="540" y1="170" x2="540" y2="610" />
-  <line class="lane" x1="960" y1="170" x2="960" y2="610" />
+  <line class="lane" x1="900" y1="170" x2="900" y2="610" />
   <rect class="node front" x="52" y="190" width="236" height="54" />
   <text class="text" x="82" y="223">POST /api/query</text>
-  <rect class="node platform" x="414" y="190" width="252" height="54" />
-  <text class="text" x="446" y="223">建立 live SSE 通道</text>
-  <rect class="node run" x="816" y="190" width="288" height="54" />
-  <text class="text" x="848" y="223">request.query -&gt; run.start</text>
-  <path class="arrow" d="M288 217 H406" />
-  <path class="arrow" d="M666 217 H808" />
-  <rect class="node run" x="800" y="286" width="320" height="72" />
-  <text class="text" x="828" y="316">基础执行主流</text>
-  <text class="small" x="828" y="340">reasoning.* / content.* / tool.* / action.*</text>
-  <path class="arrow dashed" d="M800 322 H548" />
+  <rect class="node platform" x="560" y="190" width="520" height="54" />
+  <text class="text" x="592" y="223">建立 live SSE 通道 -&gt; request.query -&gt; run.start</text>
+  <path class="arrow" d="M288 217 H552" />
+  <rect class="node platform" x="540" y="286" width="540" height="72" />
+  <text class="text" x="572" y="316">基础执行主流</text>
+  <text class="small" x="572" y="340">reasoning.* / content.* / tool.* / action.* / artifact.publish</text>
+  <path class="arrow" d="M820 244 V278" />
   <path class="arrow dashed" d="M540 322 H178" />
   <rect class="node note" x="62" y="404" width="226" height="52" />
   <text class="text" x="92" y="436">POST /api/submit</text>
@@ -57,11 +51,11 @@
   <text class="text" x="432" y="430">同一条协议有 3 类运行中控制分支</text>
   <text class="small" x="432" y="460">submit：对应 request.submit，恢复等待中的工具交互</text>
   <text class="small" x="432" y="486">steer：对应 request.steer，在原 SSE 流中插入追加用户指令</text>
-  <text class="small" x="432" y="512">interrupt：不产生 request.interrupt，而是以 run.cancel -&gt; [DONE] 收尾</text>
-  <text class="small" x="432" y="548">HITL 与 artifact 是主流中的两种重要分支，分别见 03 / 04 号图</text>
+  <text class="small" x="432" y="512">interrupt：不产生 request.interrupt，结果由 run.cancel 表达</text>
+  <text class="small" x="432" y="548">HITL 与 artifact 是主流中的重要分支，分别见 05 / 06 / 07 号图</text>
   <rect class="panel" x="56" y="640" width="1208" height="118" />
   <text class="subtitle" x="80" y="670">图上要点</text>
-  <text class="small" x="80" y="698">- 这张图只讲入口和分流，不展开 approval / question / bash / artifact 的细节。</text>
-  <text class="small" x="80" y="720">- 默认泳道固定为 Frontend / Agent Platform / Run-Agent。</text>
+  <text class="small" x="80" y="698">- 这张图只讲入口和分流，不展开 approval / question / artifact 的细节。</text>
+  <text class="small" x="80" y="720">- 默认泳道固定为 Frontend / Agent Platform。</text>
   <text class="small" x="80" y="742">- 只画前端可见的 live 协议，不画 snapshot / persisted 事件。</text>
 </svg>
