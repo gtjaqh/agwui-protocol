@@ -105,8 +105,13 @@ data: [DONE]
 | `requestId` | 前端生成 |
 | `chatId` | chat ID |
 | `runId` | 当前 run |
-| `toolId` | 提交给哪个工具 |
-| `payload` | 表单值、按钮值、选择结果等 |
+| `awaitingId` | 当前提交关联的等待态 |
+| `params` | 前端原始提交数组；顺序与当前 `awaiting.ask` item 一一对应 |
+
+说明：
+
+- `request.submit` 保留前端原始输入，便于审计与回放。
+- 归一化后的结构化结果由 `awaiting.answer` 表达。
 
 ### 4.4 `request.steer`
 
@@ -282,9 +287,56 @@ data: [DONE]
 | `taskId` | 可选；任务 ID |
 | `text` | 正文全文 |
 
-## 10. Tool 事件
+## 10. Awaiting 事件
 
-### 10.1 `tool.start`
+### 10.1 `awaiting.ask`
+
+进入等待态的事件；用于把当前 question / approval / form 交互定义直接发给前端。
+
+| 字段 | 说明 |
+| --- | --- |
+| `awaitingId` | 当前等待态唯一标识 |
+| `runId` | 当前运行实例 ID |
+| `mode` | `"question" \| "approval" \| "form"` |
+| `timeout` | 可选；等待超时秒数 |
+| `questions` | question 模式下出现；问题定义直接内联 |
+| `approvals` | approval 模式下出现；审批项直接内联 |
+| `forms` | form 模式下出现；表单定义直接内联 |
+| `viewportType` | 仅 form 模式保留；当前常见为 `"html"` |
+| `viewportKey` | 仅 form 模式保留；前端可据此取视图 |
+| `viewportPayload` | 可选；form 相关视图载荷 |
+
+说明：
+
+- 当前协议统一使用 `mode`，不再以 `kind` 作为对外主字段。
+- 旧版分离式 payload 事件已移除；question / approval / form 的交互定义都直接位于 `awaiting.ask`。
+- `question` 常见顺序是 `tool.start -> awaiting.ask -> tool.args* -> tool.end`。
+- `approval / form` 常见顺序是 `tool.start -> tool.args* -> tool.end -> awaiting.ask`。
+- question / approval 默认不要求 `viewportType`、`viewportKey`；form 是唯一保留 viewport 语义的形态。
+
+### 10.2 `awaiting.answer`
+
+服务端在处理完提交后写回的归一化结果事件；与 `request.submit` 配套出现。
+
+| 字段 | 说明 |
+| --- | --- |
+| `awaitingId` | 当前等待态唯一标识 |
+| `runId` | 当前运行实例 ID |
+| `mode` | `"question" \| "approval" \| "form"` |
+| `answers` | question 模式下出现；归一化答案数组 |
+| `approvals` | approval 模式下出现；归一化审批结果数组 |
+| `forms` | form 模式下出现；归一化表单结果数组 |
+| `cancelled` | 可选；整批取消时为 `true` |
+| `reason` | 可选；取消或拒绝原因 |
+
+说明：
+
+- `request.submit` 记录原始 `params[]`，`awaiting.answer` 记录服务端归一化后的结构化结果。
+- form 的每一项通常会归一化成 `action: "submit" | "reject" | "cancel"`。
+
+## 11. Tool 事件
+
+### 11.1 `tool.start`
 
 工具开始事件；这里只列当前 live SSE 主路径里稳定出现的字段。
 
@@ -300,9 +352,9 @@ data: [DONE]
 说明：
 
 - 当前实现的 live `tool.start` 不应默认暴露 `toolType`、`viewportKey`、`toolTimeout`。
-- 需要视图相关信息时，应以 `awaiting.ask`、`awaiting.payload` 或 `GET /api/viewport` 的约定为准，而不是把这些字段视为所有 `tool.start` 的默认 schema。
+- 需要视图相关信息时，应以 `awaiting.ask` 或 `GET /api/viewport` 的约定为准，而不是把这些字段视为所有 `tool.start` 的默认 schema。
 
-### 10.2 `tool.args`
+### 11.2 `tool.args`
 
 | 字段 | 说明 |
 | --- | --- |
@@ -310,13 +362,13 @@ data: [DONE]
 | `delta` | 工具参数增量 |
 | `chunkIndex` | 同一 `toolId` 下的分片序号 |
 
-### 10.3 `tool.end`
+### 11.3 `tool.end`
 
 | 字段 | 说明 |
 | --- | --- |
 | `toolId` | 工具唯一标识 |
 
-### 10.4 `tool.snapshot`
+### 11.4 `tool.snapshot`
 
 主要用于历史记录；不是当前 `/api/query` 实时流主路径。
 
@@ -335,23 +387,23 @@ data: [DONE]
 - 历史 `tool.snapshot` 也不应被文档默认定义为包含 `toolType`、`viewportKey`、`toolTimeout`。
 - 如某些兼容实现或视图相关上下文带出额外字段，应作为具体实现扩展说明，不应提升为当前协议默认字段。
 
-### 10.5 `tool.result`
+### 11.5 `tool.result`
 
 | 字段 | 说明 |
 | --- | --- |
 | `toolId` | 工具唯一标识 |
 | `result` | 工具运行结果 |
 
-### 10.6 提交边界
+### 11.6 提交边界
 
 - 前端交互提交走 `POST /api/submit`。
-- HTTP body 使用 `awaitingId` 标识当前等待态。
-- 运行流里会记录为 `request.submit`，当前 payload 仍使用 `toolId`。
+- HTTP body 使用 `runId + awaitingId + params[]` 标识当前等待态与提交内容。
+- 运行流里会依次出现 `request.submit` 与 `awaiting.answer`。
 - 不会额外发一条独立的“工具参数事件”。
 
-## 11. Artifact 事件
+## 12. Artifact 事件
 
-### 11.1 `artifact.publish`
+### 12.1 `artifact.publish`
 
 向当前 chat 资产池发布产物的事件；每个产物对应一条 `artifact.publish`。
 
@@ -368,9 +420,9 @@ data: [DONE]
 - 常见顺序是 `tool.start -> tool.args -> tool.end -> tool.result -> artifact.publish`。
 - 如果一次调用里有多个产物，`tool.result` 后会连续出现多条 `artifact.publish`。
 
-## 12. Action 事件
+## 13. Action 事件
 
-### 12.1 `action.start`
+### 13.1 `action.start`
 
 | 字段 | 说明 |
 | --- | --- |
@@ -380,20 +432,20 @@ data: [DONE]
 | `taskId` | 可选；任务 ID |
 | `description` | 动作描述 |
 
-### 12.2 `action.args`
+### 13.2 `action.args`
 
 | 字段 | 说明 |
 | --- | --- |
 | `actionId` | 动作唯一标识 |
 | `delta` | 动作参数增量 |
 
-### 12.3 `action.end`
+### 13.3 `action.end`
 
 | 字段 | 说明 |
 | --- | --- |
 | `actionId` | 动作唯一标识 |
 
-### 12.4 `action.snapshot`
+### 13.4 `action.snapshot`
 
 主要用于历史记录；不是当前 `/api/query` 实时流主路径。
 
@@ -406,16 +458,16 @@ data: [DONE]
 | `description` | 动作描述 |
 | `arguments` | 动作参数 |
 
-### 12.5 `action.result`
+### 13.5 `action.result`
 
 | 字段 | 说明 |
 | --- | --- |
 | `actionId` | 动作唯一标识 |
 | `result` | 动作执行结果 |
 
-## 13. Source 事件
+## 14. Source 事件
 
-### 13.1 `source.snapshot`
+### 14.1 `source.snapshot`
 
 源信息块的快照事件；当前仍未实现实时 SSE 输出。
 
@@ -425,7 +477,7 @@ data: [DONE]
 | `title` | 来源标题 |
 | `url` | 来源地址 |
 
-## 14. 层级关系速览
+## 15. 层级关系速览
 
 ```text
 chat
@@ -434,16 +486,18 @@ chat
 │   ├── task
 │   │   ├── reasoning
 │   │   ├── content
+│   │   ├── awaiting
 │   │   ├── tool
 │   │   └── action
 │   └── artifact.publish
 └── source(snapshot, optional)
 ```
 
-## 15. 需要重点记住的边界
+## 16. 需要重点记住的边界
 
 - `query` 对应 `request.query`
 - `submit` 对应 `request.submit`
+- 提交归一化结果对应 `awaiting.answer`
 - `steer` 对应 `request.steer`
 - `interrupt` 对应 `run.cancel`
 - `heartbeat` 和 `event: message

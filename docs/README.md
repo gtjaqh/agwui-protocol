@@ -31,6 +31,7 @@
 ### `guides/`
 
 - [交互时序图](guides/interaction-sequences.md)
+- [HITL 交互指南](guides/hitl.md)
 - [接入用例](guides/use-cases.md)
 - [资源导航](guides/resources.md)
 

@@ -149,10 +149,11 @@
 | `reasoningId` | Reasoning | 一段推理输出的标识 |
 | `contentId` | Content | 一段正文输出的标识 |
 | `toolId` | Tool | 一次工具调用的标识 |
+| `awaitingId` | Awaiting | 一次等待态与交互提交流程的标识 |
 | `actionId` | Action | 一次动作渲染或执行的标识 |
 | `artifactId` | Artifact | 单个发布产物的标识 |
 | `steerId` | Steer | 一次运行中追加指令的标识 |
-| `viewportKey` | Viewport | 获取某个前端视图 payload 的键 |
+| `viewportKey` | Viewport | 获取某个前端视图 payload 的键；当前主要用于 `mode=form` |
 
 ## 7. Query 公共字段
 

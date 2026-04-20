@@ -96,7 +96,22 @@
 | --- | --- | --- |
 | `runId` | `string` | 当前运行 ID |
 | `awaitingId` | `string` | 必填；当前交互关联的 awaiting / tool |
-| `params` | `any` | 必填；表单值、按钮值、选择结果等 |
+| `params` | `SubmitParam[]` | 必填；顶层始终是数组，按顺序对应 `awaiting.ask` 当前批次里的 item |
+
+#### `SubmitParam`
+
+`params[i]` 与 `awaiting.ask.questions|approvals|forms[i]` 固定按下标对应。`id` 可选，但仅作审计/日志用途，服务端不会据此路由。
+
+常见形态：
+
+- `question`：`{"id":"q1","answer":"..."}` 或 `{"id":"q2","answers":[...]}`，两者必须二选一
+- `approval`：`{"id":"tool_bash","decision":"approve|approve_prefix_run|reject","reason":"..."}`
+- `form`：`{"id":"form-1","payload":{...}}`、`{"id":"form-1","reason":"..."}` 或 `{"id":"form-1"}`
+
+补充：
+
+- question / approval / form 都允许 `params: []` 表示整批取消
+- form 是唯一与 `viewportType:"html"`、`viewportKey`、`viewportPayload` 配套出现的 HITL 形态
 
 #### `SubmitResponse`
 
@@ -111,8 +126,9 @@
 #### 边界说明
 
 - `submit` 是同步确认接口。
+- 服务端按 `awaitingId` 反查当前等待态，不要求前端重复提交 `mode`。
 - 工具执行结果与最终回答仍走原 SSE 流，常见表现是 `tool.result` 或后续 `content.*`。
-- 运行流里记录为 `request.submit`；当前 HTTP 字段名是 `awaitingId`，而 live SSE 回看事件仍使用 `toolId`。
+- 运行流里会先记录 `request.submit`，透传前端原始 `params[]`；随后再通过 `awaiting.answer` 记录服务端归一化后的结构化结果。
 - WebSocket 形态下，`/api/submit` 也返回普通 `response` 帧，而不是 `stream`。
 
 ### 2.4 `POST /api/steer`

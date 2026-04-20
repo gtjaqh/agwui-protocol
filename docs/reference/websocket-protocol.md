@@ -39,6 +39,11 @@ GET /ws
 { "frame": "request" | "response" | "stream" | "push" | "error" }
 ```
 
+方向约定：
+
+- 客户端只发送 `request`
+- 服务端发送 `response`、`stream`、`push`、`error`
+
 ### 3.1 `request`
 
 客户端向服务端发起业务请求：
@@ -48,7 +53,9 @@ GET /ws
   "frame": "request",
   "type": "/api/query",
   "id": "req_001",
-  "payload": {}
+  "payload": {
+    "message": "请总结最新的 HITL 协议变化"
+  }
 }
 ```
 
@@ -56,7 +63,7 @@ GET /ws
 
 - `type` 直接复用原始 REST 路径，如 `/api/query`、`/api/submit`
 - `id` 是同一连接内的请求唯一标识
-- `payload` 与对应 HTTP request body / query 参数语义一致
+- `payload` 与对应 HTTP request body / query 参数语义一致；`/api/submit` 时仍然是 `runId + awaitingId + params[]`
 
 ### 3.2 `response`
 
@@ -102,7 +109,7 @@ GET /ws
 - `streamId` 是传输层流标识，不等于业务 `runId`
 - 一个连接可同时存在多个 stream
 
-### 3.4 `stream` 结束帧
+### 3.4 `stream` 终止帧
 
 ```json
 {
@@ -116,6 +123,7 @@ GET /ws
 
 说明：
 
+- 带 `event` 的 `stream` 是事件帧；带 `reason/lastSeq` 的 `stream` 是终止帧
 - `reason` 取值：`done | error | cancelled | detached`
 - `lastSeq` 用于断线重连补流
 - WebSocket 下不使用 SSE 的 `[DONE]`
@@ -161,13 +169,15 @@ GET /ws
 
 建议直接沿用原始 REST 路径作为 WS `type`：
 
-- `/api/query` → `stream`
-- `/api/run/stream` → `stream`
-- `/api/run/status` → `response`
-- `/api/submit` → `response`
-- `/api/steer` → `response`
-- `/api/interrupt` → `response`
-- `/api/agents`、`/api/chats`、`/api/chat`、`/api/tools` 等 → `response`
+| `request.type` | 典型返回 | 说明 |
+| --- | --- | --- |
+| `/api/query` | `stream` | 建立流式事件输出，随后收到多条事件帧与一条终止帧 |
+| `/api/run/stream` | `stream` | 观察已有 run 的流式事件 |
+| `/api/run/status` | `response` | 返回 run 状态快照 |
+| `/api/submit` | `response` | 同步确认接收；后续结果继续在既有 `stream` 中出现 |
+| `/api/steer` | `response` | 同步确认接收；后续结果继续在既有 `stream` 中出现 |
+| `/api/interrupt` | `response` | 同步确认接收；真实停止以 `run.cancel` 或终止帧为准 |
+| `/api/agents`、`/api/chats`、`/api/chat`、`/api/tools` 等 | `response` | 普通查询类请求 |
 
 说明：
 

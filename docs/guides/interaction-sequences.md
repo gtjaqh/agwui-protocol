@@ -1,6 +1,6 @@
 # 交互时序图
 
-本页把 AGW 的 live 协议交互收敛为 7 张编号化主图，只覆盖前端真实可见的 `HTTP + live SSE`，不画 snapshot / persisted 历史事件。
+本页把 AGW 的 live 协议交互收敛为 5 张编号化主图，只覆盖前端真实可见的 `HTTP + live SSE`，不画 snapshot / persisted 历史事件。为兼容既有静态资源，图号继续沿用原编号。
 
 如果启用 WebSocket，业务先后关系不变；变化的是建流方式与传输承载：
 
@@ -8,7 +8,7 @@
 - live 事件改由 `stream frame` 承载
 - `submit / steer / interrupt` 可以通过同一条 WS 连接发出
 
-因此本页不再复制一套“7 张 WebSocket 版时序图”，而是继续用 HTTP + SSE 主路径表达业务语义。
+因此本页不再复制一套“WebSocket 版时序图”，而是继续用 HTTP + SSE 主路径表达业务语义。
 
 ## 01 总览图
 
@@ -47,27 +47,21 @@
 - 流里不会出现 `request.interrupt`
 - `[DONE]` 属于通用传输层收尾，不在这张细分图里单独展开
 
-## 05 Question
+## HITL 独立说明
 
-![05 AGW Question Sequence](../../assets/diagrams/sequences/05-agw-seq-question.svg)
+Human-in-the-loop 已从本页拆到独立指南：[HITL 交互指南](hitl.md)。
 
-这张图只画 question 分支：
+独立页会分别展开：
 
-- `awaiting.ask` 先声明等待态
-- `questions` 通过 `awaiting.payload` 下发
-- `POST /api/submit` 的 HTTP 字段名是 `awaitingId`
-- 流内 `request.submit` 当前仍使用 `toolId`，并继续在同一条 SSE 流中体现
+- `question`：`awaiting.ask` 先于 `tool.args / tool.end`
+- `approval`：`tool.args / tool.end` 之后再进入 `awaiting.ask`
+- `form`：与 approval 同序，但额外保留 `viewportType / viewportKey / viewportPayload`
 
-## 06 Approval
+三态共享的提交边界：
 
-![06 AGW Approval Sequence](../../assets/diagrams/sequences/06-agw-seq-approval.svg)
-
-这张图只画 approval 分支：
-
-- `tool.args -> tool.end -> awaiting.ask`
-- `questions` 直接位于 `awaiting.ask` 顶层
-- approval 没有 `awaiting.payload`
-- `request.submit` 与后续 `tool.result` 仍继续在同一条 SSE 流中体现
+- `POST /api/submit` 的 HTTP body 统一为 `runId + awaitingId + params[]`
+- 流里先写 `request.submit` 记录原始 `params[]`
+- 随后写 `awaiting.answer` 记录归一化结果
 
 ## 07 Artifact
 
@@ -86,4 +80,5 @@
 - 不画 `reasoning.snapshot`、`content.snapshot`、`tool.snapshot`、`action.snapshot`
 - 不画不存在的 `request.interrupt`
 - 不在 `tool.start` 上标注当前实现没有的 `toolType`、`viewportKey`、`toolTimeout`
-- `POST /api/submit` 的 HTTP 字段名是 `awaitingId`；当前流内 `request.submit` 事件仍使用 `toolId`
+- `POST /api/submit` 的稳定形状是 `runId + awaitingId + params[]`
+- HITL 的流内边界是 `request.submit` 记录原始输入，`awaiting.answer` 记录归一化结果
