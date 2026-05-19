@@ -5,7 +5,7 @@
 ## 阅读顺序
 
 1. `overview/`：先理解协议定位、术语边界和整体架构
-2. `reference/`：再查看 HTTP API、SSE 事件、WebSocket 与数据模型
+2. `reference/`：再查看核心 HTTP API、SSE 事件、WebSocket、平台扩展与数据模型
 3. `guides/`：最后看时序图、接入用例、资源导航
 4. `visuals/`：需要辅助理解时再看预览页和设计辅助页
 
@@ -24,6 +24,7 @@
 - [HTTP API](reference/http-api.md)
 - [SSE 事件模型](reference/sse-events.md)
 - [WebSocket 协议](reference/websocket-protocol.md)
+- [Platform Extensions](reference/platform-extensions.md)
 - [共享数据模型](reference/data-models.md)
 
 这一组文档回答“协议怎么定义、字段和行为是什么”。

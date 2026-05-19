@@ -1,117 +1,98 @@
 # HTTP API
 
+本页定义 AGW UI 核心 HTTP 接口。事实源以 `agent-platform` 当前实现为准；记忆、定时任务、归档、Agent 编辑和 Admin Gateway 等平台能力见 [Platform Extensions](platform-extensions.md)。
+
 ## 1. 总体约定
 
-- 所有公开接口均以 `/api` 为前缀。
-- 动作类请求建议使用 `POST`，资源类获取建议使用 `GET`。
-- `query` 是特殊入口：`POST /api/query` 直接返回 `text/event-stream`，不会返回独立 JSON 响应体。
-- 除 `POST /api/query` 与 `GET /api/resource` 外，当前接口默认返回 JSON 包装：`{ "code": number, "msg": string, "data": ... }`。
-- `viewport` 是历史 `ViewRequest / ViewResponse` 的统一收敛命名，当前规范使用 `GET /api/viewport`。
-- HTTP API 与 SSE 事件层不是同一层协议。`request.*` 是流内回看事件，不等于公开 HTTP body。
-- 如果服务端启用 WebSocket，建议直接沿用原始 REST 路径作为 WS `type`；HTTP 仍是公开请求语义的基线定义。
+- 所有公开 HTTP 接口都以 `/api` 为前缀。
+- 普通 JSON 接口返回 `ApiResponse<T>`：`{ "code": number, "msg": string, "data": ... }`，其中 `code = 0` 表示成功。
+- `POST /api/query` 与 `GET /api/attach` 是 SSE 接口，成功时返回 `text/event-stream`。如果请求准备阶段失败，也会返回 JSON 失败响应。
+- `GET /api/resource` 成功时直接返回文件内容，不包 JSON。
+- 如果启用 WebSocket，已注册的 WS route 会用同名 REST 路径作为 `request.type`，payload 与 HTTP body / query 参数语义对齐。
+- HTTP 请求语义与 SSE 事件语义不是 1:1 映射：例如 `POST /api/interrupt` 的流内结果是 `run.cancel`，不会产生 `request.interrupt`。
 
-## 2. 动作类接口
+## 2. 对话与运行
 
 ### 2.1 `POST /api/query`
 
-发起一次对话请求；当前实现固定返回 SSE 实时事件流。
+发起一次对话运行。成功时直接建立 SSE 事件流。
 
 #### `QueryRequest`
 
 | 字段 | 类型 | 说明 |
 | --- | --- | --- |
-| `requestId` | `string` | 前端生成，用于幂等、重试和链路追踪；前端不填时会等于 `runId` |
-| `chatId` | `string(UUID)` | 可选；缺省则服务端创建 chat |
-| `agentKey` | `string` | 可选；如 `auto`、`default`、`agent_researcher` |
+| `requestId` | `string` | 可选；前端生成，用于幂等、重试和链路追踪；缺省等于最终 `runId` |
+| `runId` | `string` | 可选；前端指定运行 ID；缺省由服务端生成 |
+| `chatId` | `string` | 可选；缺省由服务端创建 chat |
+| `agentKey` | `string` | 可选；缺省按 chat、team、channel 或全局默认智能体推断 |
 | `teamId` | `string` | 可选；团队或租户路由信息 |
-| `role` | `"user" \| "system" \| "assistant" \| "developer" \| "other"` | 当前消息角色 |
+| `role` | `"user" \| "system" \| "assistant" \| "developer" \| "other"` | 可选；当前消息角色 |
 | `message` | `string` | 必填；用户输入正文 |
-| `references` | `Reference[]` | 可选；本次请求携带的文件、图片、selection、截图等引用 |
-| `params` | `object` | 可选；结构化输入，如 `input/select/datepicker/switch` |
-| `scene` | `object` | 可选；页面上下文，通常以 `url` 为主 |
-| `scene.url` | `string` | 建议提供 |
-| `scene.title` | `string` | 可选 |
-| `stream` | `boolean` | 可选；保留作兼容字段，当前实现固定返回 SSE |
+| `references` | `Reference[]` | 可选；文件、图片、selection、截图等引用 |
+| `params` | `object` | 可选；结构化输入或渠道上下文 |
+| `scene` | `{url,title}` | 可选；页面上下文 |
+| `stream` | `boolean` | 可选；兼容字段，当前实现成功时固定返回 SSE |
 | `hidden` | `boolean` | 可选；隐藏本次请求的部分前端展示内容 |
 
-#### `QueryResponse`
-
-当前实现不会返回独立 JSON 响应体；`POST /api/query` 直接返回 `text/event-stream`。
+#### 成功响应
 
 | 项 | 说明 |
 | --- | --- |
 | `Content-Type` | `text/event-stream` |
-| `business frames` | 业务事件统一使用 `event: message`，`data` 为单行 JSON，包含 `seq/type/timestamp` |
-| `heartbeat` | 传输层保活时会出现 `: heartbeat`，注释帧，不带 JSON `data` |
-| `done sentinel` | 流结束时发送 `event: message` + `data: [DONE]`；它不是业务事件，不会进入历史 `events` |
+| 业务帧 | `event: message` + 单行 JSON `data`，字段包含 `seq/type/timestamp` |
+| heartbeat | `: heartbeat`，注释帧，不属于业务 JSON |
+| 结束帧 | `event: message` + `data: [DONE]` |
 
-#### 边界说明
+边界说明：
 
-- `request.query` 是 SSE 流里的回看事件，不是公开响应对象。
-- 当前前端应把 `query` 理解为“建立执行流”的入口，而不是“拿一份 JSON 结果”的接口。
-- `reasoning.snapshot`、`content.snapshot`、`tool.snapshot`、`action.snapshot` 不走 live SSE，只进入历史事件持久化。
-- 如果改走 WebSocket，请求 payload 仍与 `QueryRequest` 对齐，但 live 输出改由 `stream` 帧承载，见 [WebSocket 协议](websocket-protocol.md)。
+- `request.query` 是流内回看事件，不是普通 JSON 响应体。
+- `runId/requestId/chatId/agentKey/teamId` 会在服务端准备阶段补齐后进入运行上下文。
+- PROXY 模式智能体可能把请求转发给上游，但对前端仍保持同一入口语义。
 
-### 2.2 `POST /api/upload`
+### 2.2 `GET /api/attach`
 
-浏览器本地文件一步上传；上传完成后，前端可把返回的 `upload` 映射为 `Reference` 参与后续 `query`。
+观察已有 run 的实时事件，或按 `lastSeq` 补流。成功时返回 SSE。
 
-#### `UploadRequest`
+#### Query 参数
 
-| 字段 | 类型 | 说明 |
+| 参数 | 类型 | 说明 |
 | --- | --- | --- |
-| `requestId` | `string` | 前端生成，用于幂等和重试 |
-| `chatId` | `string(UUID)` | 可选；缺省则服务端创建 chat |
-| `file` | `multipart file` | 必填 |
-| `sha256` | `string` | 可选 |
+| `runId` | `string` | 必填；要观察的运行 ID |
+| `lastSeq` | `number` | 可选；客户端已收到的最后一个事件序号，服务端补发 `seq > lastSeq` 的事件 |
 
-#### `UploadResponse`
+#### 成功响应
 
-外层通常仍为统一 JSON 包装，核心数据为 `upload`：
+与 `POST /api/query` 相同，返回 `text/event-stream`。流结束时发送 `[DONE]`。
 
-| 字段 | 类型 | 说明 |
+#### 常见错误
+
+| HTTP 状态 | `msg` | 说明 |
 | --- | --- | --- |
-| `requestId` | `string` | 对应上传请求 ID |
-| `chatId` | `string(UUID)` | 所属 chat |
-| `upload.id` | `string` | 必填；chat 内短 ID，如 `r01` |
-| `upload.type` | `"file" \| "image"` | 上传类型 |
-| `upload.name` | `string` | 文件名 |
-| `upload.mimeType` | `string` | MIME 类型 |
-| `upload.sizeBytes` | `number` | 文件大小 |
-| `upload.url` | `string` | 必填；上传后的资源地址 |
-| `upload.sha256` | `string` | 可选；校验或去重用 |
+| `400` | `runId is required` / `lastSeq must be a valid integer` | 参数错误 |
+| `404` | `run not found` | run 不存在或已不可观察 |
+| `409` | `SEQ_EXPIRED` | `lastSeq` 早于可回放窗口，`data` 中包含 `oldestSeq/latestSeq/lastSeq` |
 
-#### 边界说明
-
-- 上传成功后，前端可以把 `upload` 映射到本地引用池。
-- 后续 `query` 可通过 `#{{refid}}` 或 `references[]` 使用该上传资源。
+说明：当前实现没有 `/api/run/stream` 或 `/api/run/status` 作为公开 HTTP 入口；观察运行流使用 `/api/attach`。
 
 ### 2.3 `POST /api/submit`
 
-提交前端工具交互结果。注意：这是公开 HTTP body，不等于流内的 `request.submit` 事件结构。
+提交前端 HITL 交互结果。同步响应只表示接收结果，后续工具结果和模型输出仍在原 run 的事件流中出现。
 
 #### `SubmitRequest`
 
 | 字段 | 类型 | 说明 |
 | --- | --- | --- |
-| `runId` | `string` | 当前运行 ID |
-| `awaitingId` | `string` | 必填；当前交互关联的 awaiting / tool |
-| `params` | `SubmitParam[]` | 必填；顶层始终是数组，按顺序对应 `awaiting.ask` 当前批次里的 item |
+| `runId` | `string` | 必填；当前 run |
+| `awaitingId` | `string` | 必填；当前等待态 ID |
+| `params` | `SubmitParam[]` | 必填；必须是数组，可为空数组表示整批取消 |
 
-#### `SubmitParam`
-
-`params[i]` 与 `awaiting.ask.questions|approvals|forms[i]` 固定按下标对应。`id` 可选，但仅作审计/日志用途，服务端不会据此路由。
+`params[i]` 与当前 `awaiting.ask` 中的 `questions/approvals/forms[i]` 按下标对应。`id` 可选，主要用于审计和日志。
 
 常见形态：
 
-- `question`：`{"id":"q1","answer":"..."}` 或 `{"id":"q2","answers":[...]}`，两者必须二选一
-- `approval`：`{"id":"tool_bash","decision":"approve|approve_prefix_run|reject","reason":"..."}`
-- `form`：`{"id":"form-1","payload":{...}}`、`{"id":"form-1","reason":"..."}` 或 `{"id":"form-1"}`
-
-补充：
-
-- question / approval / form 都允许 `params: []` 表示整批取消
-- form 是唯一与 `viewportType:"html"`、`viewportKey`、`viewportPayload` 配套出现的 HITL 形态
+- question：`{"id":"q1","answer":"..."}` 或 `{"id":"q2","answers":[...]}`
+- approval：`{"id":"tool_bash","decision":"approve|approve_prefix_run|reject","reason":"..."}`
+- form：`{"id":"form-1","payload":{...}}`、`{"id":"form-1","reason":"..."}` 或 `{"id":"form-1"}`
 
 #### `SubmitResponse`
 
@@ -120,27 +101,25 @@
 | `accepted` | `boolean` | 是否接受 |
 | `status` | `string` | 接收状态 |
 | `runId` | `string` | 当前 run |
-| `awaitingId` | `string` | 当前 awaiting |
+| `awaitingId` | `string` | 当前等待态 |
 | `detail` | `string` | 说明文字 |
 
-#### 边界说明
+流内边界：
 
-- `submit` 是同步确认接口。
-- 服务端按 `awaitingId` 反查当前等待态，不要求前端重复提交 `mode`。
-- 工具执行结果与最终回答仍走原 SSE 流，常见表现是 `tool.result` 或后续 `content.*`。
-- 运行流里会先记录 `request.submit`，透传前端原始 `params[]`；随后再通过 `awaiting.answer` 记录服务端归一化后的结构化结果。
-- WebSocket 形态下，`/api/submit` 也返回普通 `response` 帧，而不是 `stream`。
+- 运行流会先记录 `request.submit`，保留前端原始 `params[]`。
+- 服务端归一化结果由 `awaiting.answer` 表达。
+- WebSocket 形态下 `/api/submit` 返回普通 `response` 帧。
 
 ### 2.4 `POST /api/steer`
 
-向进行中的 run 注入新的用户指令。注意：这是公开 HTTP body；流里对应的回看事件是 `request.steer`，两者不应混用。
+向进行中的 run 注入新的用户指令。
 
 #### `SteerRequest`
 
 | 字段 | 类型 | 说明 |
 | --- | --- | --- |
 | `requestId` | `string` | 可选 |
-| `chatId` | `string(UUID)` | 可选 |
+| `chatId` | `string` | 可选 |
 | `runId` | `string` | 必填 |
 | `steerId` | `string` | 可选；缺省由服务端生成 |
 | `agentKey` | `string` | 可选 |
@@ -158,23 +137,18 @@
 | `steerId` | `string` | 当前 steer |
 | `detail` | `string` | 说明文字 |
 
-#### 边界说明
-
-- `steer` 的同步确认来自 HTTP 响应。
-- 后续处理结果继续走原 SSE 流。
-- 流层记录为 `request.steer`，这是“回看事件”，不是公开 HTTP schema 的镜像对象。
-- WebSocket 形态下，`/api/steer` 对应普通 `response` 帧。
+流内边界：同步确认来自 HTTP 响应；运行流内回看事件是 `request.steer`。
 
 ### 2.5 `POST /api/interrupt`
 
-中断进行中的 run。注意：公开 API 名称是 `interrupt`，但流层不会产生同名的 `request.*` 事件；中断结果由 `run.cancel` 表达。
+中断进行中的 run。
 
 #### `InterruptRequest`
 
 | 字段 | 类型 | 说明 |
 | --- | --- | --- |
 | `requestId` | `string` | 可选 |
-| `chatId` | `string(UUID)` | 可选 |
+| `chatId` | `string` | 可选 |
 | `runId` | `string` | 必填 |
 | `agentKey` | `string` | 可选 |
 | `teamId` | `string` | 可选 |
@@ -190,165 +164,260 @@
 | `runId` | `string` | 当前 run |
 | `detail` | `string` | 说明文字 |
 
-#### 边界说明
+流内边界：当前实现不会发 `request.interrupt`；真实停止以原事件流中的 `run.cancel` 或 WS stream 终止原因为准。
 
-- `interrupt` 的同步确认来自 HTTP 响应。
-- 实际停止以原 SSE 流中的 `run.cancel` 为准。
-- 当前流层不会发独立的 `request.interrupt`。
-- WebSocket 形态下，`/api/interrupt` 对应普通 `response` 帧。
+## 3. Catalog 与工具
 
-## 3. 资源类接口
+### 3.1 `GET /api/agents`
 
-说明：上传与资源下载继续保留在 HTTP，不迁移到 WebSocket。
-
-### 3.1 `GET /api/viewport`
-
-获取工具或渲染对应的视图（表单、UI、HTML 等）；`viewportKey` 通常来自 `awaiting.ask` 或其他业务约定。
-
-#### `ViewportRequest`
+获取智能体列表。
 
 | 参数 | 类型 | 说明 |
 | --- | --- | --- |
-| `viewportKey` | `string` | 必填 |
-
-#### `ViewportResponse`
-
-返回统一 `ApiResponse<Object>`，其中 `data` 即视图 payload。
-
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| `code` | `number` | 状态码 |
-| `msg` | `string` | 消息 |
-| `data` | `any` | 视图载荷 |
-
-#### 边界说明
-
-- 本地 HTML viewport 会包装为 `{ "html": "..." }`。
-- 其他类型通常直接透传 payload。
-- 历史文档中使用 `ViewRequest / ViewResponse`，当前统一收敛为 `viewport`。
-
-### 3.2 `GET /api/resource`
-
-获取资源（含附件、图片、产物）。当前接口成功时直接返回文件内容，而不是 JSON 包装。
-
-#### `ResourceRequest`
-
-| 参数 | 类型 | 说明 |
-| --- | --- | --- |
-| `file` | `string` | 必填；相对 data 根目录的文件路径，兼容 `/data/...` 形式 |
-| `download` | `boolean` | 可选；为 `true` 时强制下载 |
-| `t` | `string` | 可选；resource ticket |
-
-#### `ResourceResponse`
-
-| 项 | 说明 |
-| --- | --- |
-| `Content-Type` | 由文件名推断 MIME |
-| `Content-Disposition` | 图片默认 `inline`，其余默认 `attachment` |
-| `Cache-Control` | `private, no-store` |
-
-失败时通常返回统一 `ApiResponse.failure`。
-
-### 3.3 `GET /api/agents`
-
-获取智能体列表，可用于前端选择或展示。
-
-#### `AgentsRequest`
-
-| 参数 | 类型 | 说明 |
-| --- | --- | --- |
-| `includeHidden` | `boolean` | 可选；暂未实现 |
 | `tag` | `string` | 可选；按标签过滤 |
+| `channel` | `string` | 可选；按渠道过滤允许的智能体 |
 
-#### `AgentsResponse`
+响应 `data` 为 `AgentSummary[]`：
 
 | 字段 | 类型 | 说明 |
 | --- | --- | --- |
-| `agents` | `object[]` | 必填；智能体列表 |
-| `agents[].key` | `string` | 如 `agent_researcher` |
-| `agents[].name` | `string` | 展示名 |
-| `agents[].description` | `string` | 可选 |
-| `agents[].capabilities` | `string[]` | 可选；暂未实现 |
-| `agents[].meta` | `object` | 可选；暂未实现 |
+| `key` | `string` | Agent 唯一键 |
+| `name` | `string` | 展示名 |
+| `icon` | `any` | 可选 |
+| `description` | `string` | 可选 |
+| `role` | `string` | 可选 |
+| `stats.totalCount` | `number` | 会话总数 |
+| `stats.unreadCount` | `number` | 未读会话数 |
+| `meta` | `object` | 可选 |
 
-### 3.4 `GET /api/agent`
+### 3.2 `GET /api/channels`
 
-获取某个智能体的内容或详情（配置、说明、能力等）。
+获取渠道列表。
 
-#### `AgentRequest`
+响应 `data` 为 `ChannelSummary[]`，核心字段：
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `id` | `string` | 渠道 ID |
+| `name` | `string` | 展示名 |
+| `type` | `string` | 渠道类型 |
+| `defaultAgent` | `string` | 可选；默认智能体 |
+| `agents` | `string[]` | 允许的智能体 key |
+| `connected` | `boolean` | 当前连接状态 |
+
+### 3.3 `GET /api/agent`
+
+获取单个智能体详情。
 
 | 参数 | 类型 | 说明 |
 | --- | --- | --- |
 | `agentKey` | `string` | 必填 |
 
-#### `AgentResponse`
+响应 `data` 为 `AgentDetailResponse`，核心字段包括 `key/name/icon/description/role/wonders/model/mode/tools/skills/controls/meta`。如果智能体可编辑，还可能返回 `definition/soulPrompt/agentsPrompt/source`。
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| `agent` | `object` | 必填；单个智能体详情 |
-| `agent.key` | `string` | Agent 唯一键 |
-| `agent.name` | `string` | 展示名 |
-| `agent.description` | `string` | 可选 |
-| `agent.instructions` | `string` | 可选 |
-| `agent.capabilities` | `string[]` | 可选；暂未实现 |
-| `agent.meta` | `object` | 可选；暂未实现 |
+### 3.4 `GET /api/teams`
 
-### 3.5 `GET /api/chats`
+获取团队列表。响应 `data` 为 `TeamSummary[]`，核心字段包括 `teamId/name/icon/agentKeys/meta`。
 
-获取聊天列表（历史会话列表）。
+### 3.5 `GET /api/skills`
 
-#### `ChatsRequest`
+获取技能列表。
 
 | 参数 | 类型 | 说明 |
 | --- | --- | --- |
-| `cursor` | `string` | 可选；分页游标 |
-| `limit` | `number` | 可选 |
-| `q` | `string` | 可选；按名称或内容检索 |
+| `tag` | `string` | 可选；按标签过滤 |
 
-#### `ChatsResponse`
+响应 `data` 为 `SkillSummary[]`，核心字段包括 `key/name/description/meta`。
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| `items` | `object[]` | 必填；聊天列表 |
-| `items[].chatId` | `string(UUID)` | 会话 ID |
-| `items[].chatName` | `string` | 会话名称，可选 |
-| `items[].updatedAt` | `number(timestamp)` | 更新时间，可选 |
-| `nextCursor` | `string` | 下一页游标，可选 |
+### 3.6 `GET /api/tools`
 
-### 3.6 `GET /api/chat`
-
-获取聊天内容（会话详情、历史消息、关联 run 等）。
-
-#### `ChatRequest`
+获取工具列表。
 
 | 参数 | 类型 | 说明 |
 | --- | --- | --- |
-| `chatId` | `string(UUID)` | 必填 |
-| `includeEvents` | `boolean` | 可选；是否返回事件流快照 |
-| `cursor` | `string` | 可选；分页消息 |
-| `limit` | `number` | 可选 |
+| `kind` | `string` | 可选；按工具种类过滤 |
+| `tag` | `string` | 可选；按标签过滤 |
 
-#### `ChatResponse`
+响应 `data` 为 `ToolSummary[]`，核心字段包括 `key/name/label/description/meta`。
+
+### 3.7 `GET /api/tool`
+
+获取单个工具详情。
+
+| 参数 | 类型 | 说明 |
+| --- | --- | --- |
+| `toolName` | `string` | 必填 |
+
+响应 `data` 为 `ToolDetailResponse`，核心字段包括 `key/name/label/description/afterCallHint/parameters/meta`。
+
+## 4. Chat、搜索与反馈
+
+### 4.1 `GET /api/chats`
+
+获取会话列表。
+
+| 参数 | 类型 | 说明 |
+| --- | --- | --- |
+| `lastRunId` | `string` | 可选；分页或增量列表游标 |
+| `agentKey` | `string` | 可选；按智能体过滤 |
+
+响应 `data` 为 `ChatSummaryResponse[]`：
 
 | 字段 | 类型 | 说明 |
 | --- | --- | --- |
-| `chatId` | `string(UUID)` | 会话 ID |
-| `chatName` | `string` | 会话名称，可选 |
-| `chatImageToken` | `string` | 可选；访问当前 chat 作用域内图片资源的 token |
-| `rawMessages` | `object[]` | 可选；若 `includeRawMessages=true` 可返回模型原始消息 |
-| `plan` | `object` | 可选；chat 当前最新计划状态，形如 `{planId,tasks}` |
-| `artifact` | `object` | 可选；chat 当前最新产物聚合状态，形如 `{items:[...]}` |
-| `references` | `object[]` | 可选；query 引用与 chat 资产聚合后的引用池 |
+| `chatId` | `string` | 会话 ID |
+| `chatName` | `string` | 会话名称 |
+| `agentKey` | `string` | 可选 |
+| `teamId` | `string` | 可选 |
+| `createdAt` / `updatedAt` | `number` | 毫秒时间戳 |
+| `lastRunId` | `string` | 可选 |
+| `lastRunContent` | `string` | 可选 |
+| `read` | `ChatReadState` | 已读状态 |
+| `awaiting` | `Awaiting` | 可选；当前待处理 HITL 状态摘要 |
+| `usage` | `ChatUsageData` | 可选；聚合 token 用量 |
+
+### 4.2 `GET /api/chat`
+
+获取单个会话详情。
+
+| 参数 | 类型 | 说明 |
+| --- | --- | --- |
+| `chatId` | `string` | 必填 |
+| `includeRawMessages` | `boolean` | 可选；为 `true` 时返回模型原始消息 |
+
+响应 `data` 为 `ChatDetailResponse`：
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `chatId` | `string` | 会话 ID |
+| `chatName` | `string` | 会话名称 |
+| `resourceTicket` | `string` | 可选；已鉴权用户访问资源的临时票据 |
+| `rawMessages` | `object[]` | 可选；仅 `includeRawMessages=true` |
 | `events` | `BaseEvent[]` | 历史事件列表 |
+| `runs` | `RunSummary[]` | run 摘要列表 |
+| `activeRun` | `ActiveRunInfo` | 可选；仍在进行中的 run，含 `runId/state/lastSeq/oldestSeq/startedAt` |
+| `plan` | `object` | 可选；chat 当前计划聚合态 |
+| `artifact` | `object` | 可选；chat 当前产物聚合态 |
+| `references` | `Reference[]` | 可选；引用池 |
+| `usage` | `ChatUsageData` | 可选；聚合 token 用量 |
 
-#### 历史事件折叠规则
+历史事件折叠规则：
 
-- 历史 `events` 中，`start/delta/args/end` 通常会折叠为 `snapshot`，并保留 `params/result`。
-- `plan.update` 不再出现在历史 `events` 中，而是折叠为 chat 级 `plan`。
-- `artifact.publish` 不再出现在历史 `events` 中，而是折叠为 chat 级 `artifact` 聚合态。
+- `start/delta/args/end` 类事件在历史中可能折叠为 `snapshot`。
+- `plan.update` 可折叠为 chat 级 `plan`。
+- `artifact.publish` 可折叠为 chat 级 `artifact` 聚合态。
+- 如果 `activeRun` 存在，当前实现会避免把该 run 的合成 `run.complete` 当作历史完成态返回。
 
-## 4. 重点边界
+### 4.3 `POST /api/read`
 
-- `query -> SSE`：`POST /api/query` 直接返回事件流。
-- `steer -> request.steer`：`POST /api/steer` 的运行回看事件是 `request.steer`。
-- `interrupt -> run.cancel`：`POST /api/interrupt` 的流层结果是 `run.cancel`，而不是 `request.interrupt`。
+标记单个会话或某个智能体下全部会话为已读。
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `chatId` | `string` | 可选；指定会话 |
+| `runId` | `string` | 可选；指定读到的 run |
+| `agentKey` | `string` | 可选；当 `chatId` 为空时，按智能体全部标记已读 |
+
+响应 `data` 为 `MarkChatReadResponse`，包含 `chatId/agentKey/lastRunId/read/agentUnreadCount/updatedCount`。
+
+### 4.4 `POST /api/search`
+
+全局搜索会话内容。
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `query` | `string` | 必填 |
+| `agentKey` | `string` | 可选 |
+| `teamId` | `string` | 可选 |
+| `limit` | `number` | 可选；缺省为 20 |
+
+响应 `data` 为 `{ query, count, results }`，`results[]` 包含 `chatId/chatName/agentKey/teamId/runId/kind/role/timestamp/snippet/score`。
+
+### 4.5 `POST /api/session-search`
+
+在单个 chat 内搜索。
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `chatId` | `string` | 必填 |
+| `query` | `string` | 必填 |
+| `limit` | `number` | 可选 |
+
+响应 `data` 为 `{ chatId, query, count, results }`，`results[]` 包含 `kind/chatId/runId/stage/role/timestamp/snippet/score/meta`。
+
+### 4.6 `POST /api/feedback`
+
+设置或清除 run 反馈。
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `chatId` | `string` | 必填 |
+| `runId` | `string` | 必填 |
+| `type` | `"thumbs_down" \| "clear"` | 必填 |
+| `comment` | `string` | 可选 |
+
+响应 `data` 为 `{ chatId, runId, type, setAt }`。
+
+## 5. 资源与上传
+
+### 5.1 `GET /api/viewport`
+
+获取工具或表单对应的视图 payload。
+
+| 参数 | 类型 | 说明 |
+| --- | --- | --- |
+| `viewportKey` | `string` | 必填 |
+
+响应 `data` 为视图 payload。本地 HTML viewport 通常包装为 `{ "html": "..." }`。
+
+### 5.2 `GET /api/resource`
+
+读取 chat 资源、附件或产物。
+
+| 参数 | 类型 | 说明 |
+| --- | --- | --- |
+| `file` | `string` | 必填；相对 data 根目录的文件路径，兼容 `/data/...` 形式 |
+| `t` | `string` | 可选；resource ticket。启用资源票据且没有 Bearer principal 时必填 |
+
+成功时直接返回文件内容。失败时返回 JSON 失败响应。
+
+### 5.3 `POST /api/upload`
+
+上传浏览器本地文件。请求为 `multipart/form-data`。
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `requestId` | `string` | 可选；缺省由服务端生成 |
+| `chatId` | `string` | 可选；缺省由服务端创建 chat |
+| `agentKey` | `string` | 可选；创建 chat 时使用 |
+| `file` | `multipart file` | 必填；实际实现会接受 multipart 中的第一个文件字段 |
+
+响应 `data` 为 `UploadResponse`：
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `requestId` | `string` | 上传请求 ID |
+| `chatId` | `string` | 所属 chat |
+| `upload.id` | `string` | chat 内短 ID，如 `r01` |
+| `upload.type` | `string` | 当前实现保存为 `"file"` |
+| `upload.name` | `string` | 安全化后的文件名 |
+| `upload.mimeType` | `string` | MIME 类型 |
+| `upload.sizeBytes` | `number` | 文件大小 |
+| `upload.url` | `string` | `/api/resource?file=...` |
+| `upload.sha256` | `string` | SHA-256 |
+| `upload.sandboxPath` | `string` | 沙箱内建议路径，如 `/workspace/name.ext` |
+
+上传完成后，前端可把 `upload` 映射为 `Reference`，并在后续 `query` 中通过 `#{{refid}}` 或 `references[]` 使用。
+
+## 6. HTTP 与 WS 对照
+
+| HTTP 路径 | HTTP 成功形态 | WS 成功形态 |
+| --- | --- | --- |
+| `POST /api/query` | SSE | `stream` |
+| `GET /api/attach` | SSE | `stream` |
+| `POST /api/submit` | JSON | `response` |
+| `POST /api/steer` | JSON | `response` |
+| `POST /api/interrupt` | JSON | `response` |
+| catalog/chat/search/feedback/viewport | JSON | 已注册 WS route 返回 `response`；`/api/session-search` 当前仅 HTTP |
+| `GET /api/resource` | 文件内容 | `response`，用于网关/资源协商，不是二进制直传 |
+| `POST /api/upload` | multipart 上传 + JSON | WS 形态用于网关下载/拉取协商；浏览器文件上传仍优先使用 HTTP |

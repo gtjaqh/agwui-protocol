@@ -596,9 +596,9 @@ event: message
 data: [DONE]
 ```
 
-## 9. 文件产出物发布：一次工具调用，多条 `artifact.publish`
+## 9. 文件产出物发布：一次工具调用，一条批量 `artifact.publish`
 
-一次 `_artifact_publish_` 工具调用可以发布多个文件，并通过多条独立 `artifact.publish` 事件把这些文件发布到当前 chat；`runId` 仅用于标记来源 run。
+一次 `_artifact_publish_` 工具调用可以发布多个文件，并通过一条批量 `artifact.publish` 事件把这些文件发布到当前 chat；`runId` 仅用于标记来源 run。
 
 ```json
 // 1) tool call (one invocation, multiple artifacts)
@@ -631,13 +631,10 @@ event: message
 data: {"seq":11,"type":"tool.end","timestamp":1707000910,"toolId":"tool_publish_1"}
 
 event: message
-data: {"seq":12,"type":"tool.result","timestamp":1707000911,"toolId":"tool_publish_1","result":"{\"ok\":true,\"artifacts\":[{\"artifactId\":\"asset_5d4c3b2a1f00\",\"artifact\":{\"type\":\"file\",\"name\":\"final-report.md\",\"mimeType\":\"text/markdown\",\"url\":\"/api/resource?file=chat_artifact_001%2Fartifacts%2Frun_artifact_001%2Ffinal-report.md\"}},{\"artifactId\":\"asset_5d4c3b2a1f01\",\"artifact\":{\"type\":\"file\",\"name\":\"summary.md\",\"mimeType\":\"text/markdown\",\"url\":\"/api/resource?file=chat_artifact_001%2Fartifacts%2Frun_artifact_001%2Fsummary.md\"}}]}"}
+data: {"seq":12,"type":"tool.result","timestamp":1707000911,"toolId":"tool_publish_1","result":"{\"ok\":true,\"artifactCount\":2}"}
 
 event: message
-data: {"seq":13,"type":"artifact.publish","timestamp":1707000912,"artifactId":"asset_5d4c3b2a1f00","chatId":"chat_artifact_001","runId":"run_artifact_001","artifact":{"type":"file","name":"final-report.md","mimeType":"text/markdown","url":"/api/resource?file=chat_artifact_001%2Fartifacts%2Frun_artifact_001%2Ffinal-report.md"}}
-
-event: message
-data: {"seq":14,"type":"artifact.publish","timestamp":1707000913,"artifactId":"asset_5d4c3b2a1f01","chatId":"chat_artifact_001","runId":"run_artifact_001","artifact":{"type":"file","name":"summary.md","mimeType":"text/markdown","url":"/api/resource?file=chat_artifact_001%2Fartifacts%2Frun_artifact_001%2Fsummary.md"}}
+data: {"seq":13,"type":"artifact.publish","timestamp":1707000912,"chatId":"chat_artifact_001","runId":"run_artifact_001","artifactCount":2,"artifacts":[{"type":"file","name":"final-report.md","mimeType":"text/markdown","url":"/api/resource?file=chat_artifact_001%2Fartifacts%2Frun_artifact_001%2Ffinal-report.md"},{"type":"file","name":"summary.md","mimeType":"text/markdown","url":"/api/resource?file=chat_artifact_001%2Fartifacts%2Frun_artifact_001%2Fsummary.md"}]}
 
 event: message
 data: [DONE]

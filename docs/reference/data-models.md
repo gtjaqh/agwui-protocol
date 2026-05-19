@@ -151,7 +151,7 @@
 | `toolId` | Tool | 一次工具调用的标识 |
 | `awaitingId` | Awaiting | 一次等待态与交互提交流程的标识 |
 | `actionId` | Action | 一次动作渲染或执行的标识 |
-| `artifactId` | Artifact | 单个发布产物的标识 |
+| `artifactId` | Artifact | 单个产物的标识；当前 live `artifact.publish` 默认使用批量 `artifacts[]` 承载，单个产物 ID 如存在通常在元素内表达 |
 | `steerId` | Steer | 一次运行中追加指令的标识 |
 | `viewportKey` | Viewport | 获取某个前端视图 payload 的键；当前主要用于 `mode=form` |
 
@@ -201,7 +201,7 @@
 
 - 表示 chat 当前最新产物集合。
 - 典型结构为 `{ items: [...] }`。
-- 实时流里每个产物对应一条 `artifact.publish`。
+- 实时流里当前使用 `artifact.publish` 承载一次发布结果，主字段为 `chatId/runId/artifactCount/artifacts`。
 
 ### `references`
 
