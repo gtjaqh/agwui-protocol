@@ -12,10 +12,10 @@
 
 | HTTP | WS | 用途 | 核心字段 |
 | --- | --- | --- | --- |
-| `POST /api/agent-create` | 是 | 创建可编辑 Agent | `key`、`definition`、可选 `soulPrompt/agentsPrompt` |
-| `POST /api/agent-update` | 是 | 更新可编辑 Agent | `key`、`definition`、可选 `soulPrompt/agentsPrompt` |
-| `POST /api/agent-delete` | 是 | 删除可编辑 Agent | `key` |
-| `GET /api/agent-editor-options` | 是 | 获取编辑器选项 | 返回 `models/contextTags/modes/proxyConfigSchema` |
+| `POST /api/agent/create` | 是 | 创建可编辑 Agent | `key`、`definition`、可选 `soulPrompt/agentsPrompt` |
+| `POST /api/agent/update` | 是 | 更新可编辑 Agent | `key`、`definition`、可选 `soulPrompt/agentsPrompt` |
+| `POST /api/agent/delete` | 是 | 删除可编辑 Agent | `key` |
+| `GET /api/agent/editor-options` | 是 | 获取编辑器选项 | 返回 `models/contextTags/modes/proxyConfigSchema` |
 
 响应：
 
@@ -27,14 +27,13 @@
 
 | HTTP | WS | 用途 | 核心字段 |
 | --- | --- | --- | --- |
-| `POST /api/chat-delete` | 是 | 删除 chat | `chatId` |
-| `POST /api/chat-archive` | 是 | 批量归档 chat | `chatIds[]` |
-| `GET /api/chat-export` | 否 | 导出 chat | query 参数按实现处理 |
+| `POST /api/chat/delete` | 是 | 删除 chat | `chatId` |
+| `POST /api/chat/archive` | 是 | 批量归档 chat | `chatIds[]` |
+| `GET /api/chat/export` | 否 | 导出 chat | `chatId` |
 | `GET /api/archives` | 是 | 归档列表 | `agentKey`、`limit`、`offset` |
 | `GET /api/archive` | 是 | 归档详情 | `chatId` |
-| `POST /api/archive-search` | 是 | 搜索归档 | `query`、可选 `agentKey/limit` |
-| `POST /api/archive-delete` | 是 | 删除归档 | `chatId` |
-| `GET /api/archive-resource` | 否 | 读取归档资源 | `file` 等资源参数 |
+| `POST /api/archives/search` | 是 | 搜索归档 | `query`、可选 `agentKey/limit` |
+| `POST /api/archive/delete` | 是 | 删除归档 | `chatId` |
 
 注意：
 
@@ -47,11 +46,11 @@
 | --- | --- | --- | --- |
 | `POST /api/schedules` | 是 | 列出定时任务 | 可选 `tag` |
 | `POST /api/schedule` | 是 | 获取单个定时任务 | `id` |
-| `POST /api/schedule-create` | 是 | 创建定时任务 | `name/description/cron/agentKey/query` |
-| `POST /api/schedule-update` | 是 | 更新定时任务 | `id` 加可选更新字段 |
-| `POST /api/schedule-delete` | 是 | 删除定时任务 | `id` |
-| `POST /api/schedule-toggle` | 是 | 启用或暂停 | `id/enabled` |
-| `POST /api/schedule-executions` | 是 | 执行历史 | `id/limit/offset` |
+| `POST /api/schedule/create` | 是 | 创建定时任务 | `name/description/cron/agentKey/query` |
+| `POST /api/schedule/update` | 是 | 更新定时任务 | `id` 加可选更新字段 |
+| `POST /api/schedule/delete` | 是 | 删除定时任务 | `id` |
+| `POST /api/schedule/toggle` | 是 | 启用或暂停 | `id/enabled` |
+| `POST /api/schedule/executions` | 是 | 执行历史 | `id/limit/offset` |
 
 核心模型：
 
@@ -110,23 +109,23 @@
 下列 route 当前已注册为 WebSocket `request.type`，但不属于核心协议：
 
 ```text
-/api/agent-create
-/api/agent-update
-/api/agent-delete
-/api/agent-editor-options
-/api/chat-delete
-/api/chat-archive
+/api/agent/create
+/api/agent/update
+/api/agent/delete
+/api/agent/editor-options
+/api/chat/delete
+/api/chat/archive
 /api/archives
 /api/archive
-/api/archive-search
-/api/archive-delete
+/api/archives/search
+/api/archive/delete
 /api/schedules
 /api/schedule
-/api/schedule-create
-/api/schedule-update
-/api/schedule-delete
-/api/schedule-toggle
-/api/schedule-executions
+/api/schedule/create
+/api/schedule/update
+/api/schedule/delete
+/api/schedule/toggle
+/api/schedule/executions
 /api/remember
 /api/learn
 /api/memory/meta

@@ -196,13 +196,13 @@ WebSocket 下不使用 SSE 的 `[DONE]`。
 | `/api/channels` | `{}` | `response` | 渠道列表 |
 | `/api/agent` | `{agentKey}` | `response` | Agent 详情 |
 | `/api/teams` | `{}` | `response` | 团队列表 |
-| `/api/skills` | `{tag?}` | `response` | 技能列表 |
-| `/api/tools` | `{kind?,tag?}` | `response` | 工具列表 |
+| `/api/skills` | `{}` | `response` | 技能列表 |
+| `/api/tools` | `{kind?}` | `response` | 工具列表 |
 | `/api/tool` | `{toolName}` | `response` | 工具详情 |
 | `/api/chats` | `{lastRunId?,agentKey?}` | `response` | 会话列表 |
 | `/api/chat` | `{chatId,includeRawMessages?}` | `response` | 会话详情 |
 | `/api/read` | `{chatId?,runId?,agentKey?}` | `response` | 标记已读 |
-| `/api/search` | `{query,agentKey?,teamId?,limit?}` | `response` | 全局搜索 |
+| `/api/chats/search` | `{query,agentKey?,teamId?,limit?}` | `response` | 全局搜索 active chats |
 | `/api/feedback` | `{chatId,runId,type,comment?}` | `response` | run 反馈 |
 | `/api/viewport` | `{viewportKey}` | `response` | 获取视图 payload |
 
@@ -210,7 +210,6 @@ WebSocket 下不使用 SSE 的 `[DONE]`。
 
 - 当前实现的观察入口是 `/api/attach`，不是 `/api/run/stream`。
 - 当前实现没有公开 `/api/run/status` WS route；如需状态，优先通过 `/api/chat` 的 `activeRun` 或流事件判断。
-- 当前实现没有注册 `/api/session-search` WS route；会话内搜索使用 HTTP `POST /api/session-search`。
 - 浏览器本地文件上传仍优先使用 HTTP `POST /api/upload`；WS 下 `/api/upload` 和 `/api/pull` 主要用于网关资源拉取/下载协商。
 
 ## 4. 平台扩展 WS 映射
@@ -218,23 +217,23 @@ WebSocket 下不使用 SSE 的 `[DONE]`。
 以下扩展 route 也已注册为 WS request，可按普通 `response` 使用；接口语义见 [Platform Extensions](platform-extensions.md)。
 
 ```text
-/api/agent-create
-/api/agent-update
-/api/agent-delete
-/api/agent-editor-options
-/api/chat-delete
-/api/chat-archive
+/api/agent/create
+/api/agent/update
+/api/agent/delete
+/api/agent/editor-options
+/api/chat/delete
+/api/chat/archive
 /api/archives
 /api/archive
-/api/archive-search
-/api/archive-delete
+/api/archives/search
+/api/archive/delete
 /api/schedules
 /api/schedule
-/api/schedule-create
-/api/schedule-update
-/api/schedule-delete
-/api/schedule-toggle
-/api/schedule-executions
+/api/schedule/create
+/api/schedule/update
+/api/schedule/delete
+/api/schedule/toggle
+/api/schedule/executions
 /api/remember
 /api/learn
 /api/memory/meta

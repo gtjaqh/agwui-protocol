@@ -221,11 +221,7 @@
 
 ### 3.5 `GET /api/skills`
 
-获取技能列表。
-
-| 参数 | 类型 | 说明 |
-| --- | --- | --- |
-| `tag` | `string` | 可选；按标签过滤 |
+获取技能列表。当前实现不支持 `tag` 参数过滤，始终返回全部技能。
 
 响应 `data` 为 `SkillSummary[]`，核心字段包括 `key/name/description/meta`。
 
@@ -236,9 +232,8 @@
 | 参数 | 类型 | 说明 |
 | --- | --- | --- |
 | `kind` | `string` | 可选；按工具种类过滤 |
-| `tag` | `string` | 可选；按标签过滤 |
 
-响应 `data` 为 `ToolSummary[]`，核心字段包括 `key/name/label/description/meta`。
+当前实现不支持 `tag` 参数过滤。响应 `data` 为 `ToolSummary[]`，核心字段包括 `key/name/label/description/meta`。
 
 ### 3.7 `GET /api/tool`
 
@@ -320,7 +315,7 @@
 
 响应 `data` 为 `MarkChatReadResponse`，包含 `chatId/agentKey/lastRunId/read/agentUnreadCount/updatedCount`。
 
-### 4.4 `POST /api/search`
+### 4.4 `POST /api/chats/search`
 
 全局搜索会话内容。
 
@@ -333,19 +328,7 @@
 
 响应 `data` 为 `{ query, count, results }`，`results[]` 包含 `chatId/chatName/agentKey/teamId/runId/kind/role/timestamp/snippet/score`。
 
-### 4.5 `POST /api/session-search`
-
-在单个 chat 内搜索。
-
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| `chatId` | `string` | 必填 |
-| `query` | `string` | 必填 |
-| `limit` | `number` | 可选 |
-
-响应 `data` 为 `{ chatId, query, count, results }`，`results[]` 包含 `kind/chatId/runId/stage/role/timestamp/snippet/score/meta`。
-
-### 4.6 `POST /api/feedback`
+### 4.5 `POST /api/feedback`
 
 设置或清除 run 反馈。
 
@@ -418,6 +401,6 @@
 | `POST /api/submit` | JSON | `response` |
 | `POST /api/steer` | JSON | `response` |
 | `POST /api/interrupt` | JSON | `response` |
-| catalog/chat/search/feedback/viewport | JSON | 已注册 WS route 返回 `response`；`/api/session-search` 当前仅 HTTP |
+| catalog/chat/search/feedback/viewport | JSON | 已注册 WS route 返回 `response` |
 | `GET /api/resource` | 文件内容 | `response`，用于网关/资源协商，不是二进制直传 |
 | `POST /api/upload` | multipart 上传 + JSON | WS 形态用于网关下载/拉取协商；浏览器文件上传仍优先使用 HTTP |
