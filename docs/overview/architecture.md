@@ -33,7 +33,7 @@ Gateway 可以是 Agent Platform 的一种兼容部署模式，但不是协议�
 - `03-agw-seq-steer.svg`：运行中的 steer 控制分支，`request.steer` 插入原始事件流
 - `04-agw-seq-interrupt.svg`：运行中的 interrupt 控制分支，流层结果表现为 `run.cancel`
 - `07-agw-seq-artifact.svg`：产物发布时序；当前规范正文以批量 `artifact.publish` 为准
-- [HITL 交互指南](../guides/hitl.md)：独立展开 `question / approval / form` 三态，对应 `05 / 06 / 08` 三张交互图
+- [HITL 交互指南](../guides/hitl.md)：独立展开 `question / approval / form / plan` 四态；现有序列图覆盖 `05 / 06 / 08` 三条工具型 HITL 路径
 
 ## 4. 补充架构示意
 
@@ -72,10 +72,10 @@ Gateway 可以是 Agent Platform 的一种兼容部署模式，但不是协议�
 ### 视图交互链路
 
 1. 运行时通过 live SSE 发出 `tool.start`、`awaiting.ask`
-2. `awaiting.ask.mode` 统一为 `question`、`approval`、`form` 三态，其中 question / approval 直接内联交互定义，form 额外保留 `viewportType`、`viewportKey`、`viewportPayload`
-3. 前端根据 `mode` 选择合适 UI；仅 form 默认依赖 viewport 相关语义，必要时再通过 `GET /api/viewport` 拉取视图
+2. `awaiting.ask.mode` 统一为 `question`、`approval`、`form`、`plan` 四态，其中交互定义都直接内联在 `awaiting.ask`
+3. 前端根据 `mode` 选择合适 UI；question / approval / plan 默认是 builtin viewport，form 默认是 html viewport，必要时再通过 `GET /api/viewport` 拉取视图
 4. 用户在前端完成问题回答、审批决策或表单填写
-5. 前端通过 `POST /api/submit` 回传 `runId + awaitingId + params[]`
+5. 前端通过 `POST /api/submit` 回传 `agentKey + runId + awaitingId + params[]`
 6. 后续结果继续在同一 SSE 流中体现，常见顺序是 `request.submit -> awaiting.answer -> tool.result`
 
 如果多个终端同时订阅同一 run，`awaiting.ask` 也可以通过多个 observer 广播；任一终端 `submit` 后，其它终端都会继续收到后续事件。
@@ -83,5 +83,6 @@ Gateway 可以是 Agent Platform 的一种兼容部署模式，但不是协议�
 补充说明：
 
 - question：`awaiting.ask` 先于 `tool.args / tool.end`，提交项使用 `answer` 或 `answers`
-- approval：`approvals[]` 直接位于 `awaiting.ask` 顶层，提交项使用 `decision` / `reason`
-- form：`forms[]` 直接位于 `awaiting.ask` 顶层，且是唯一保留 `viewportType:"html"` + `viewportKey` 的模式
+- approval：`approvals[]` 直接位于 `awaiting.ask` 顶层，提交项使用 `decision` / `reason`，支持 `approve`、`approve_rule_run`、`reject`
+- form：`forms[]` 直接位于 `awaiting.ask` 顶层，approve 提交 `decision:"approve"` + `form:{...}`，reject 可带 `reason`
+- plan：`plan` 是单个对象，用于 CODER planning 确认，提交项只能 `approve` 或 `reject`

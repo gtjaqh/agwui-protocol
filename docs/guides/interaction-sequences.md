@@ -55,13 +55,15 @@ Human-in-the-loop 已从本页拆到独立指南：[HITL 交互指南](hitl.md)�
 
 - `question`：`awaiting.ask` 先于 `tool.args / tool.end`
 - `approval`：`tool.args / tool.end` 之后再进入 `awaiting.ask`
-- `form`：与 approval 同序，但额外保留 `viewportType / viewportKey / viewportPayload`
+- `form`：与 approval 同序，默认使用 `viewportType:"html"`，可带 `viewportKey`
+- `plan`：用于 CODER planning 确认，`awaiting.ask.plan` 是单个对象
 
-三态共享的提交边界：
+四态共享的提交边界：
 
-- `POST /api/submit` 的 HTTP body 统一为 `runId + awaitingId + params[]`
+- `POST /api/submit` 的 HTTP body 统一为 `agentKey + runId + awaitingId + params[]`
 - 流里先写 `request.submit` 记录原始 `params[]`
 - 随后写 `awaiting.answer` 记录归一化结果
+- `mode=plan` 固定只接受 1 个提交项，`decision` 只能是 `approve` 或 `reject`
 
 ## 07 Artifact
 
@@ -80,5 +82,5 @@ Human-in-the-loop 已从本页拆到独立指南：[HITL 交互指南](hitl.md)�
 - 不画 `reasoning.snapshot`、`content.snapshot`、`tool.snapshot`、`action.snapshot`
 - 不画不存在的 `request.interrupt`
 - 不在 `tool.start` 上标注当前实现没有的 `toolType`、`viewportKey`、`toolTimeout`
-- `POST /api/submit` 的稳定形状是 `runId + awaitingId + params[]`
+- `POST /api/submit` 的稳定形状是 `agentKey + runId + awaitingId + params[]`
 - HITL 的流内边界是 `request.submit` 记录原始输入，`awaiting.answer` 记录归一化结果

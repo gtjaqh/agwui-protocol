@@ -153,7 +153,7 @@
 | `actionId` | Action | 一次动作渲染或执行的标识 |
 | `artifactId` | Artifact | 单个产物的标识；当前 live `artifact.publish` 默认使用批量 `artifacts[]` 承载，单个产物 ID 如存在通常在元素内表达 |
 | `steerId` | Steer | 一次运行中追加指令的标识 |
-| `viewportKey` | Viewport | 获取某个前端视图 payload 的键；当前主要用于 `mode=form` |
+| `viewportKey` | Viewport | 获取某个前端视图 payload 的键；question / approval / plan 默认使用 builtin 同名 key，form 可提供 HTML 视图 key |
 
 ## 7. Query 公共字段
 
@@ -196,6 +196,7 @@
 - 表示 chat 当前最新计划状态。
 - 典型结构为 `{ planId, tasks }`。
 - 实时流里以 `plan.update` 表达。
+- CODER planning 确认不使用这个聚合对象；它通过 `awaiting.ask.mode="plan"` 和单个 `awaiting.ask.plan` 对象表达。
 
 ### `artifact`
 

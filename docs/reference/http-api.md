@@ -83,16 +83,19 @@
 | 字段 | 类型 | 说明 |
 | --- | --- | --- |
 | `runId` | `string` | 必填；当前 run |
+| `agentKey` | `string` | 必填；必须匹配当前 run 所属智能体 |
 | `awaitingId` | `string` | 必填；当前等待态 ID |
 | `params` | `SubmitParam[]` | 必填；必须是数组，可为空数组表示整批取消 |
 
-`params[i]` 与当前 `awaiting.ask` 中的 `questions/approvals/forms[i]` 按下标对应。`id` 可选，主要用于审计和日志。
+`params[i]` 与当前 `awaiting.ask` 中的 `questions/approvals/forms[i]` 按下标对应。`mode=plan` 固定只接受 1 项，对应单个 `awaiting.ask.plan`。`id` 可选，主要用于审计和日志。
 
 常见形态：
 
 - question：`{"id":"q1","answer":"..."}` 或 `{"id":"q2","answers":[...]}`
-- approval：`{"id":"tool_bash","decision":"approve|approve_prefix_run|reject","reason":"..."}`
-- form：`{"id":"form-1","payload":{...}}`、`{"id":"form-1","reason":"..."}` 或 `{"id":"form-1"}`
+- approval：`{"id":"tool_bash","decision":"approve|approve_rule_run|reject","reason":"..."}`
+- form approve：`{"id":"form-1","decision":"approve","form":{...}}`
+- form reject：`{"id":"form-1","decision":"reject","reason":"...","form":{...}}`
+- plan：`{"id":"run_001_coder_plan_confirm_1","decision":"approve|reject","reason":"..."}`
 
 #### `SubmitResponse`
 

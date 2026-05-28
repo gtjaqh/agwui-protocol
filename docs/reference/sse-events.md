@@ -130,6 +130,19 @@ data: [DONE]
 | `chatId` | 当前 chat |
 | `stage` | 阶段标记 |
 
+### 4.4 `planning.*`
+
+CODER planning 模式通过 `planning_write` 产出可确认的执行计划。`planning_write` 的内部工具参数仍可叫 `markdown`，但对外 live / replay 事件中的计划正文统一使用 `text`。
+
+| 事件 | 关键字段 |
+| --- | --- |
+| `planning.start` | `planningId`、可选 `planningFile/chatId/runId/title/updatedAt` |
+| `planning.delta` | `planningId`、`delta` |
+| `planning.snapshot` | `planningId`、可选 `planningFile/chatId/runId/title/text/updatedAt` |
+| `planning.end` | `planningId` |
+
+`planning.start/delta/end` 是 planning 能力事件，不是 `planning_write` 工具 UI 事件。即使 `planning_write.yml` 配置 `clientVisible:false`，也只隐藏对应 `tool.*` 展示，不隐藏 `planning.*` 生命周期事件。
+
 ## 5. Run 事件
 
 ### 5.1 `run.start`
@@ -223,25 +236,27 @@ data: [DONE]
 
 ### 9.1 `awaiting.ask`
 
-进入等待态的事件，直接内联前端需要渲染的 question / approval / form 定义。
+进入等待态的事件，直接内联前端需要渲染的 question / approval / form / plan 定义。
 
 | 字段 | 说明 |
 | --- | --- |
 | `awaitingId` | 当前等待态 ID |
-| `mode` | `"question" \| "approval" \| "form"` |
-| `viewportType` | 可选；主要用于 form |
-| `viewportKey` | 可选；主要用于 form，可配合 `GET /api/viewport` |
+| `mode` | `"question" \| "approval" \| "form" \| "plan"` |
+| `viewportType` | 可选；question / approval / plan 默认 `"builtin"`，form 默认 `"html"` |
+| `viewportKey` | 可选；question / approval / plan 默认同名 key，form 可由输入提供，可配合 `GET /api/viewport` |
 | `timeout` | 可选；等待超时秒数 |
 | `runId` | 当前 run |
 | `questions` | question 模式下出现 |
 | `approvals` | approval 模式下出现 |
 | `forms` | form 模式下出现 |
+| `plan` | plan 模式下出现；单个对象 |
 
 说明：
 
 - 当前协议统一使用 `mode`，不以 `kind` 作为对外主字段。
-- question / approval / form 的交互定义都直接位于 `awaiting.ask`。
-- form 是当前主要保留 viewport 语义的等待态。
+- question / approval / form / plan 的交互定义都直接位于 `awaiting.ask`。
+- `approvals[]` 只服务工具/HITL 审批；CODER planning 确认使用 `mode="plan"` 和单个 `plan` 对象。
+- `viewportKey` 是视图 payload 的检索键，视图相关信息应从 `awaiting.ask` 或 `/api/viewport` 获取。
 
 ### 9.2 `awaiting.answer`
 
@@ -250,14 +265,15 @@ data: [DONE]
 | 字段 | 说明 |
 | --- | --- |
 | `awaitingId` | 当前等待态 ID |
-| `mode` | `"question" \| "approval" \| "form"` |
+| `mode` | `"question" \| "approval" \| "form" \| "plan"` |
 | `status` | 可选；归一化状态 |
 | `answers` | question 模式下出现 |
 | `approvals` | approval 模式下出现 |
 | `forms` | form 模式下出现 |
+| `plan` | plan 模式下出现；含 `decision`、可选 `id/planningId/reason` |
 | `error` | 可选；处理错误 |
 
-说明：`request.submit` 记录原始 `params[]`，`awaiting.answer` 记录服务端归一化结构。
+说明：`request.submit` 记录原始 `params[]`，`awaiting.answer` 记录服务端归一化结构。`mode=plan` 固定只接受 1 个提交项，归一化结果写入 `awaiting.answer.plan`，`decision` 只能是 `approve` 或 `reject`。
 
 ## 10. Tool 事件
 
@@ -362,6 +378,7 @@ chat
 │   ├── task
 │   │   ├── reasoning
 │   │   ├── content
+│   │   ├── planning
 │   │   ├── awaiting
 │   │   ├── tool
 │   │   ├── action
