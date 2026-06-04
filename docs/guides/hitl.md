@@ -27,7 +27,16 @@ question 用于 `_ask_user_question_` 这类“补信息”交互。当前约定
 - `awaiting.ask.mode = "question"`
 - `questions[]` 直接内联在 `awaiting.ask`
 - question 默认 `viewportType:"builtin"`、`viewportKey:"question"`
-- `params[i]` 使用 `answer` 或 `answers`，两者必须二选一
+- 当前内置问题类型包括 `text`、`password`、`number`、`select`、`multi-select`、`date`、`datetime`
+- 非 `multi-select` 问题提交 `answer`；`multi-select` 问题提交 `answers`，两者不能同时出现
+- `date` 和 `datetime` 必须使用单值 `answer`，不能使用 `answers`
+
+`date` / `datetime` 细节：
+
+- `date` 推荐前端提交 `YYYY-MM-DD`，例如 `2026-05-15`
+- `datetime` 推荐前端提交 `YYYY-MM-DDTHH:mm`，例如 `2026-05-15T09:30`
+- 需要表达时区时可以在字符串中携带时区信息，但协议层仍按字符串传递
+- 服务端只要求非空字符串并原样写入 `awaiting.answer.answers[].answer`，不承诺做日期解析、时区转换或强格式校验
 
 典型形态：
 
@@ -54,6 +63,35 @@ question 用于 `_ask_user_question_` 这类“补信息”交互。当前约定
   "params": [
     { "id": "q1", "answer": "前端工程师" },
     { "id": "q2", "answer": "偏实现" }
+  ]
+}
+```
+
+日期时间型问题示例：
+
+```json
+{
+  "type": "awaiting.ask",
+  "awaitingId": "await_date_001",
+  "runId": "run_001",
+  "mode": "question",
+  "viewportType": "builtin",
+  "viewportKey": "question",
+  "questions": [
+    { "id": "startDate", "question": "开始日期？", "type": "date" },
+    { "id": "startAt", "question": "开始时间？", "type": "datetime" }
+  ]
+}
+```
+
+```json
+{
+  "runId": "run_001",
+  "agentKey": "coder",
+  "awaitingId": "await_date_001",
+  "params": [
+    { "id": "startDate", "answer": "2026-05-15" },
+    { "id": "startAt", "answer": "2026-05-15T09:30" }
   ]
 }
 ```
@@ -115,7 +153,7 @@ approval 主要对应 Bash HITL builtin confirm 或文件工具越权路径审�
 
 ![08 AGW Form Sequence](../../assets/diagrams/sequences/08-agw-seq-form.svg)
 
-form 用于 HTML 表单型交互。它默认使用 `viewportType:"html"`，`viewportKey` 由等待态输入提供，可配合 `GET /api/viewport` 获取视图 payload。
+form 用于 HTML 表单型交互。它默认使用 `viewportType:"html"`，`viewportKey` 来自 HITL rule 或 frontend tool metadata，可配合 `GET /api/viewport?viewportKey=...` 获取 HTML payload。
 
 事件顺序：
 
@@ -126,9 +164,12 @@ form 用于 HTML 表单型交互。它默认使用 `viewportType:"html"`，`view
 - `awaiting.ask.mode = "form"`
 - `forms[]` 直接内联在 `awaiting.ask`
 - form 默认 `viewportType:"html"`；有表单视图时保留 `viewportKey`
+- `forms[]` item 主字段是 `id`、可选 `title`、可选 `toolName`、可选 `command`、可选初始 `form` 对象
 - approve 必须提交 `decision:"approve"` + `form:{...}`
 - reject 提交 `decision:"reject"`，可带 `reason` 和可选 `form`
-- `awaiting.answer.forms[]` 会归一化为 `decision`、可选 `form`、可选 `reason`
+- `params[]` 按下标对应 `forms[]`；`id` 只用于审计和日志，不用于分发
+- `awaiting.answer.forms[]` 会归一化为 `id`、可选 `command`、`decision`、可选 `form`、可选 `reason`
+- 兼容型 generic frontend tool 可接受 `payload`、`value`、`answer` 作为提交表单对象来源；对外协议推荐统一使用 `form`
 
 典型形态：
 
@@ -141,7 +182,16 @@ form 用于 HTML 表单型交互。它默认使用 `viewportType:"html"`，`view
   "viewportType": "html",
   "viewportKey": "leave_form",
   "forms": [
-    { "id": "form-1", "command": "submit_leave_request" }
+    {
+      "id": "form-1",
+      "title": "请假申请",
+      "command": "submit_leave_request",
+      "form": {
+        "employeeName": "Lin",
+        "days": 1,
+        "reason": ""
+      }
+    }
   ]
 }
 ```
@@ -158,6 +208,28 @@ form 用于 HTML 表单型交互。它默认使用 `viewportType:"html"`，`view
       "form": {
         "employeeName": "Lin",
         "days": 2,
+        "reason": "Conference"
+      }
+    }
+  ]
+}
+```
+
+reject 可带原因，也可带用户修改后的表单快照：
+
+```json
+{
+  "runId": "run_003",
+  "agentKey": "coder",
+  "awaitingId": "await_003",
+  "params": [
+    {
+      "id": "form-1",
+      "decision": "reject",
+      "reason": "请先把天数改成 1 天",
+      "form": {
+        "employeeName": "Lin",
+        "days": 1,
         "reason": "Conference"
       }
     }

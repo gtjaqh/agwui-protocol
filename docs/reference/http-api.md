@@ -92,10 +92,17 @@
 常见形态：
 
 - question：`{"id":"q1","answer":"..."}` 或 `{"id":"q2","answers":[...]}`
+- question date：`{"id":"startDate","answer":"2026-05-15"}`
+- question datetime：`{"id":"startAt","answer":"2026-05-15T09:30"}`
 - approval：`{"id":"tool_bash","decision":"approve|approve_rule_run|reject","reason":"..."}`
 - form approve：`{"id":"form-1","decision":"approve","form":{...}}`
 - form reject：`{"id":"form-1","decision":"reject","reason":"...","form":{...}}`
 - plan：`{"id":"run_001_coder_plan_confirm_1","decision":"approve|reject","reason":"..."}`
+
+说明：
+
+- `date` / `datetime` 问题必须提交单值 `answer`，不能提交 `answers`；服务端要求非空字符串并原样归一化。
+- form 对外协议推荐使用 `form` 字段；兼容型 generic frontend tool 可接受 `payload`、`value`、`answer` 作为表单对象来源。
 
 #### `SubmitResponse`
 

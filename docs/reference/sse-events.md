@@ -246,15 +246,16 @@ CODER planning 模式通过 `planning_write` 产出可确认的执行计划。`p
 | `viewportKey` | 可选；question / approval / plan 默认同名 key，form 可由输入提供，可配合 `GET /api/viewport` |
 | `timeout` | 可选；等待超时秒数 |
 | `runId` | 当前 run |
-| `questions` | question 模式下出现 |
+| `questions` | question 模式下出现；item 可声明 `type`，内置类型包括 `text/password/number/select/multi-select/date/datetime` |
 | `approvals` | approval 模式下出现 |
-| `forms` | form 模式下出现 |
+| `forms` | form 模式下出现；item 主字段是 `id`、可选 `title/toolName/command/form`，其中 `form` 是初始表单对象 |
 | `plan` | plan 模式下出现；单个对象 |
 
 说明：
 
 - 当前协议统一使用 `mode`，不以 `kind` 作为对外主字段。
 - question / approval / form / plan 的交互定义都直接位于 `awaiting.ask`。
+- question 中除 `multi-select` 外均提交单值 `answer`；`date` 推荐 `YYYY-MM-DD`，`datetime` 推荐 `YYYY-MM-DDTHH:mm`，服务端按非空字符串透传。
 - `approvals[]` 只服务工具/HITL 审批；CODER planning 确认使用 `mode="plan"` 和单个 `plan` 对象。
 - `viewportKey` 是视图 payload 的检索键，视图相关信息应从 `awaiting.ask` 或 `/api/viewport` 获取。
 
@@ -267,13 +268,13 @@ CODER planning 模式通过 `planning_write` 产出可确认的执行计划。`p
 | `awaitingId` | 当前等待态 ID |
 | `mode` | `"question" \| "approval" \| "form" \| "plan"` |
 | `status` | 可选；归一化状态 |
-| `answers` | question 模式下出现 |
+| `answers` | question 模式下出现；item 含 `id/question/header/answer`，`date/datetime` 的 `answer` 为提交的非空字符串 |
 | `approvals` | approval 模式下出现 |
-| `forms` | form 模式下出现 |
+| `forms` | form 模式下出现；item 含 `id`、可选 `command`、`decision`、可选 `form/reason` |
 | `plan` | plan 模式下出现；含 `decision`、可选 `id/planningId/reason` |
 | `error` | 可选；处理错误 |
 
-说明：`request.submit` 记录原始 `params[]`，`awaiting.answer` 记录服务端归一化结构。`mode=plan` 固定只接受 1 个提交项，归一化结果写入 `awaiting.answer.plan`，`decision` 只能是 `approve` 或 `reject`。
+说明：`request.submit` 记录原始 `params[]`，`awaiting.answer` 记录服务端归一化结构。form 推荐提交 `form` 字段；兼容型 generic frontend tool 可接受 `payload/value/answer` 作为表单对象来源。`mode=plan` 固定只接受 1 个提交项，归一化结果写入 `awaiting.answer.plan`，`decision` 只能是 `approve` 或 `reject`。
 
 ## 10. Tool 事件
 

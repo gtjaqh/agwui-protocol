@@ -82,7 +82,7 @@ Gateway 可以是 Agent Platform 的一种兼容部署模式，但不是协议�
 
 补充说明：
 
-- question：`awaiting.ask` 先于 `tool.args / tool.end`，提交项使用 `answer` 或 `answers`
+- question：`awaiting.ask` 先于 `tool.args / tool.end`，提交项使用 `answer` 或 `answers`；`date/datetime` 使用非空字符串 `answer`
 - approval：`approvals[]` 直接位于 `awaiting.ask` 顶层，提交项使用 `decision` / `reason`，支持 `approve`、`approve_rule_run`、`reject`
-- form：`forms[]` 直接位于 `awaiting.ask` 顶层，approve 提交 `decision:"approve"` + `form:{...}`，reject 可带 `reason`
+- form：`forms[]` 直接位于 `awaiting.ask` 顶层，默认 HTML viewport，approve 提交 `decision:"approve"` + `form:{...}`，reject 可带 `reason`
 - plan：`plan` 是单个对象，用于 CODER planning 确认，提交项只能 `approve` 或 `reject`
