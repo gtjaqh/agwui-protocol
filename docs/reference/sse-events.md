@@ -304,21 +304,66 @@ CODER planning 模式通过 `planning_write` 产出可确认的执行计划。`p
 
 ### 12.1 `source.publish`
 
-发布来源信息块。
+发布来源信息块，用于把引用、检索命中或可展示来源卡片独立于正文和 `tool.result` 下发。客户端可按 `toolId` 把来源信息展示在对应工具结果附近，也可按 `runId` 汇总展示。
 
 | 字段 | 说明 |
 | --- | --- |
 | `publishId` | 发布 ID |
 | `runId` | 当前 run |
-| `taskId` | 可选 |
-| `toolId` | 可选 |
-| `kind` | 来源类型 |
-| `query` | 可选；来源查询 |
-| `sourceCount` | 来源数量 |
-| `chunkCount` | chunk 数量 |
-| `sources` | 来源列表 |
+| `taskId` | 可选；所属 task |
+| `toolId` | 可选；关联工具调用 ID |
+| `kind` | 来源类型，如 `kbase`、`websearch`、`ragflow`、`local` 等 |
+| `query` | 可选；产生来源的查询文本 |
+| `sourceCount` | source 数量，通常等于 `sources.length` |
+| `chunkCount` | chunk 总数，通常等于所有 `sources[].chunks.length` 之和 |
+| `sources` | 来源列表；空结果时为 `[]` |
 
-旧文档中的 `source.snapshot` 不属于当前实现的默认实时事件名。
+`sources[]` 表示来源聚合单元。
+
+| `sources[]` 字段 | 说明 |
+| --- | --- |
+| `id` | 来源 ID |
+| `name` | 展示名称 |
+| `title` | 可选；标题、路径或更完整的展示名称 |
+| `icon` | 可选；来源图标标识 |
+| `url` | 可选；可打开 URL |
+| `link` | 可选；兼容型链接字段 |
+| `collectionId` | 可选；集合 ID |
+| `collectionName` | 可选；集合名称 |
+| `chunkIndexes` | 当前 source 下 chunk 的 `index` 列表 |
+| `minIndex` | 当前 source 下最小 chunk `index` |
+| `chunks` | 命中片段列表 |
+
+`chunks[]` 描述可展示和可定位的命中片段。
+
+| `chunks[]` 字段 | 说明 |
+| --- | --- |
+| `chunkId` | chunk ID |
+| `index` | 本次发布内的 chunk 序号 |
+| `content` | 片段内容 |
+| `score` | 可选；相关性分数 |
+| `timestamp` | 可选；片段时间戳 |
+| `path` | 可选；文件或资源路径 |
+| `heading` | 可选；标题或章节 |
+| `startLine` / `endLine` | 可选；文本行号范围 |
+| `pageStart` / `pageEnd` | 可选；页码范围 |
+| `slideStart` / `slideEnd` | 可选；幻灯片页范围 |
+| `sourceType` | 可选；来源文件或资源类型 |
+| `matchType` | 可选；匹配类型 |
+
+示例：
+
+```text
+event: message
+data: {"seq":14,"type":"source.publish","publishId":"src-a1b2c3","runId":"run_1","toolId":"call_1","kind":"kbase","query":"报销流程","sourceCount":1,"chunkCount":2,"sources":[{"id":"kbase:docs/policy.md","name":"policy.md","title":"docs/policy.md","icon":"kbase","collectionName":"KBASE","chunkIndexes":[1,2],"minIndex":1,"chunks":[{"chunkId":"chunk_1","index":1,"content":"报销申请需要提交发票。","path":"docs/policy.md","startLine":12,"endLine":14,"sourceType":"markdown"},{"chunkId":"chunk_2","index":2,"content":"审批通过后进入付款流程。","score":0.82,"path":"docs/policy.md","startLine":30,"endLine":33,"sourceType":"markdown","matchType":"semantic"}]}],"timestamp":1707000005000}
+```
+
+事件顺序建议：
+
+- 与工具调用有关的来源信息，建议在对应 `tool.result` 之后发送。
+- 与整体回答有关的来源信息，可以仅关联 `runId`。
+
+本协议不定义 `source.snapshot` 作为默认实时事件名。
 
 ## 13. Artifact 事件
 
