@@ -5,7 +5,7 @@
 ## 当前职责
 
 - 展示首页主图
-- 提供 overview / reference / guides / visuals 的导航入口
+- 提供编号专题文档、兼容入口和辅助视觉页的导航入口
 - 给第一次访问的读者一个最短阅读路径
 
 ## 不应放在首页的内容
@@ -17,7 +17,10 @@
 
 ## 维护约束
 
-- 协议定义应维护在 `docs/reference/`
-- 交互主线应维护在 `docs/overview/` 与 `docs/guides/`
+- 协议定义应维护在 `docs/10-16` 编号专题文档
+- 交互主线应维护在 `docs/01-02`、`docs/20-22`、`docs/30-33` 与 `docs/40`
+- 平台扩展应维护在 `docs/50-51`
 - 辅助视觉页应维护在 `docs/visuals/`
-- WebSocket route 以 `agent-platform` 当前注册表为准，正式清单维护在 `docs/reference/websocket-protocol.md`
+- WebSocket route 以 `agent-platform` 当前注册表为准，正式清单维护在 `docs/15-协议数据-WebSocket传输协议.md`
+- 首页链接应优先指向编号专题文档或 `docs/README.md`，避免指向旧兼容入口作为主要阅读路径
+- 首页文案只能概述项目定位和阅读路径，协议字段表、事件表和接入示例应留在对应编号专题文档

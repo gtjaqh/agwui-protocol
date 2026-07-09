@@ -1,45 +1,79 @@
 # 文档导航
 
-`agwui-protocol` 采用内容仓库化结构，把“协议是什么”“协议怎么定义”“怎么接入理解”“辅助视觉页”分开维护。
+`agwui-protocol` 的正式正文采用编号专题文档维护。旧的 `overview/`、`reference/`、`guides/` 路径保留为兼容入口，正文不再双份维护。
 
 ## 阅读顺序
 
-1. `overview/`：先理解协议定位、术语边界和整体架构
-2. `reference/`：再查看核心 HTTP API、SSE 事件、WebSocket、平台扩展与数据模型
-3. `guides/`：最后看时序图、接入用例、资源导航
-4. `visuals/`：需要辅助理解时再看预览页和设计辅助页
+1. [01-概览-协议定位与阅读主线](01-概览-协议定位与阅读主线.md)
+2. [02-概览-术语边界与架构主线](02-概览-术语边界与架构主线.md)
+3. [10-协议数据-HTTP核心运行接口](10-协议数据-HTTP核心运行接口.md)
+4. [13-协议数据-SSE传输与请求运行事件](13-协议数据-SSE传输与请求运行事件.md)
+5. [14-协议数据-SSE内容工具来源与产物事件](14-协议数据-SSE内容工具来源与产物事件.md)
+6. [15-协议数据-WebSocket传输协议](15-协议数据-WebSocket传输协议.md)
+7. [16-协议数据-共享数据模型](16-协议数据-共享数据模型.md)
+8. [20-交互容器-HITL-Question与Approval](20-交互容器-HITL-Question与Approval.md)
+9. [21-交互容器-HITL-Form与Plan](21-交互容器-HITL-Form与Plan.md)
+10. [30-33 接入用例](30-接入用例-基础问答与工具调用.md)
+11. [40-交互时序-编号化主图与资产引用](40-交互时序-编号化主图与资产引用.md)
+12. [50-平台扩展-扩展接口总览](50-平台扩展-扩展接口总览.md)
 
-## 分区说明
+## 专题索引
 
-### `overview/`
+### 01 概览
 
-- [协议定位](overview/protocol-positioning.md)
-- [术语与边界](overview/terminology-and-boundaries.md)
-- [架构与交互图](overview/architecture.md)
+- [01-概览-协议定位与阅读主线](01-概览-协议定位与阅读主线.md)
+- [02-概览-术语边界与架构主线](02-概览-术语边界与架构主线.md)
 
-这一组文档回答“这是什么、怎么理解、主线是什么”。
+### 10 协议数据
 
-### `reference/`
+- [10-协议数据-HTTP核心运行接口](10-协议数据-HTTP核心运行接口.md)
+- [11-协议数据-HTTP目录会话与资源接口](11-协议数据-HTTP目录会话与资源接口.md)
+- [12-协议数据-HTTP与WebSocket对照](12-协议数据-HTTP与WebSocket对照.md)
+- [13-协议数据-SSE传输与请求运行事件](13-协议数据-SSE传输与请求运行事件.md)
+- [14-协议数据-SSE内容工具来源与产物事件](14-协议数据-SSE内容工具来源与产物事件.md)
+- [15-协议数据-WebSocket传输协议](15-协议数据-WebSocket传输协议.md)
+- [16-协议数据-共享数据模型](16-协议数据-共享数据模型.md)
 
-- [HTTP API](reference/http-api.md)
-- [SSE 事件模型](reference/sse-events.md)
-- [WebSocket 协议](reference/websocket-protocol.md)
-- [Platform Extensions](reference/platform-extensions.md)
-- [共享数据模型](reference/data-models.md)
+### 20 交互容器
 
-这一组文档回答“协议怎么定义、字段和行为是什么”。
+- [20-交互容器-HITL-Question与Approval](20-交互容器-HITL-Question与Approval.md)
+- [21-交互容器-HITL-Form与Plan](21-交互容器-HITL-Form与Plan.md)
+- [22-交互容器-运行控制与资源交互](22-交互容器-运行控制与资源交互.md)
 
-### `guides/`
+### 30 接入用例
 
-- [交互时序图](guides/interaction-sequences.md)
-- [HITL 交互指南](guides/hitl.md)
-- [接入用例](guides/use-cases.md)
-- [资源导航](guides/resources.md)
+- [30-接入用例-基础问答与工具调用](30-接入用例-基础问答与工具调用.md)
+- [31-接入用例-计划任务与多步骤运行](31-接入用例-计划任务与多步骤运行.md)
+- [32-接入用例-文件图片与工作区引用](32-接入用例-文件图片与工作区引用.md)
+- [33-接入用例-运行控制与产物发布](33-接入用例-运行控制与产物发布.md)
 
-这一组文档回答“怎么接入、怎么联调、怎么阅读时序”。
+### 40 时序与资产
 
-### `visuals/`
+- [40-交互时序-编号化主图与资产引用](40-交互时序-编号化主图与资产引用.md)
 
+### 50 平台扩展
+
+- [50-平台扩展-扩展接口总览](50-平台扩展-扩展接口总览.md)
+- [51-平台扩展-WebSocket非核心Route](51-平台扩展-WebSocket非核心Route.md)
+
+### 60 资源
+
+- [60-资源导航-SDK测试项目与视觉页](60-资源导航-SDK测试项目与视觉页.md)
 - [SSE Event Color Preview](visuals/sse-event-color-preview.html)
 
-这一组内容是辅助视觉页，不属于正式规范正文。
+## 兼容入口
+
+- `overview/`：旧概览路径，指向 01/02。
+- `reference/`：旧协议定义路径，指向 10-16 与 50/51。
+- `guides/`：旧指南路径，指向 20-22、30-33、40、60。
+- `visuals/`：辅助视觉页，不属于正式规范正文。
+
+
+## 文档维护约定
+
+- `docs/` 根部编号专题文档是正式正文的唯一主维护位置。
+- `docs/overview/`、`docs/reference/`、`docs/guides/` 只保留兼容入口，不放完整正文。
+- 新增专题文档时沿用当前编号分组：`01-02` 概览、`10-16` 协议数据、`20-22` 交互容器、`30-33` 接入用例、`40` 时序与资产、`50-51` 平台扩展、`60` 资源导航。
+- 修改协议事实时，需要同步检查相关 HTTP、SSE、WebSocket、数据模型和接入用例文档，避免同一事实多处漂移。
+- 重构目录、链接或导航时不得顺手修改协议语义、接口字段、事件名、示例事件类型或 SVG 资产内容。
+- 首页 `index.html` 只承担导航和主视觉，不承载完整协议正文；首页维护边界见 `site/index-notes.md`。
