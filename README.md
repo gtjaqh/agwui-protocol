@@ -46,7 +46,7 @@ AGW UI Interaction Protocol 用于定义前端应用如何与智能体平台通�
 - `request.*`、`run.*`、`task.*`、`content.*` 等名称属于实时事件层，不要求和 HTTP API 形成 1:1 命名映射。
 - `POST /api/interrupt` 的结果在流层体现为 `run.cancel`，不会额外产生 `request.interrupt`。
 - WebSocket 是额外传输层，不改变既有 HTTP API 与事件语义。
-- 记忆、定时任务、归档、Agent 编辑、Admin Gateway 等接口属于平台扩展，见 [Platform Extensions](docs/reference/platform-extensions.md)。
+- 记忆、automation、归档、管理面与资源协商等接口属于平台扩展，见 [Platform Extensions](docs/reference/platform-extensions.md)。
 
 ## 目录结构
 

@@ -184,8 +184,8 @@
 
 | 参数 | 类型 | 说明 |
 | --- | --- | --- |
-| `tag` | `string` | 可选；按标签过滤 |
-| `channel` | `string` | 可选；按渠道过滤允许的智能体 |
+| `scope` | `string` | 可选；agent summary 可见范围 |
+| `includeChats` | `number` | 可选；每个 agent 附带最近 chat 数，范围 0-50 |
 
 响应 `data` 为 `AgentSummary[]`：
 
@@ -198,24 +198,10 @@
 | `role` | `string` | 可选 |
 | `stats.totalCount` | `number` | 会话总数 |
 | `stats.unreadCount` | `number` | 未读会话数 |
+| `chats` | `ChatSummary[]` | 可选；由 `includeChats` 控制 |
 | `meta` | `object` | 可选 |
 
-### 3.2 `GET /api/channels`
-
-获取渠道列表。
-
-响应 `data` 为 `ChannelSummary[]`，核心字段：
-
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| `id` | `string` | 渠道 ID |
-| `name` | `string` | 展示名 |
-| `type` | `string` | 渠道类型 |
-| `defaultAgent` | `string` | 可选；默认智能体 |
-| `agents` | `string[]` | 允许的智能体 key |
-| `connected` | `boolean` | 当前连接状态 |
-
-### 3.3 `GET /api/agent`
+### 3.2 `GET /api/agent`
 
 获取单个智能体详情。
 
@@ -225,35 +211,21 @@
 
 响应 `data` 为 `AgentDetailResponse`，核心字段包括 `key/name/icon/description/role/wonders/model/mode/tools/skills/controls/meta`。如果智能体可编辑，还可能返回 `definition/soulPrompt/agentsPrompt/source`。
 
-### 3.4 `GET /api/teams`
+### 3.3 `POST /api/agent/model-config`
+
+更新或读取 agent 模型配置。请求体包含 `agentKey` 以及模型配置字段；响应为更新后的 agent 配置摘要。
+
+### 3.4 `GET /api/model-options`
+
+获取聊天输入区可展示的模型与 reasoning effort 选项。前端按当前 agent `mode` 自行决定是否展示该控件。
+
+### 3.5 `GET /api/teams`
 
 获取团队列表。响应 `data` 为 `TeamSummary[]`，核心字段包括 `teamId/name/icon/agentKeys/meta`。
 
-### 3.5 `GET /api/skills`
+### 3.6 Admin catalog
 
-获取技能列表。当前实现不支持 `tag` 参数过滤，始终返回全部技能。
-
-响应 `data` 为 `SkillSummary[]`，核心字段包括 `key/name/description/meta`。
-
-### 3.6 `GET /api/tools`
-
-获取工具列表。
-
-| 参数 | 类型 | 说明 |
-| --- | --- | --- |
-| `kind` | `string` | 可选；按工具种类过滤 |
-
-当前实现不支持 `tag` 参数过滤。响应 `data` 为 `ToolSummary[]`，核心字段包括 `key/name/label/description/meta`。
-
-### 3.7 `GET /api/tool`
-
-获取单个工具详情。
-
-| 参数 | 类型 | 说明 |
-| --- | --- | --- |
-| `toolName` | `string` | 必填 |
-
-响应 `data` 为 `ToolDetailResponse`，核心字段包括 `key/name/label/description/afterCallHint/parameters/meta`。
+Skill、tool 与可编辑 agent 的管理接口位于 `/api/admin/*`，属于平台扩展，见 [Platform Extensions](platform-extensions.md)。旧的 `/api/channels`、`/api/skills`、`/api/tools`、`/api/tool` 不是当前公开入口。
 
 ## 4. Chat、搜索与反馈
 
@@ -411,6 +383,8 @@
 | `POST /api/submit` | JSON | `response` |
 | `POST /api/steer` | JSON | `response` |
 | `POST /api/interrupt` | JSON | `response` |
-| catalog/chat/search/feedback/viewport | JSON | 已注册 WS route 返回 `response` |
+| 无（WS 内置）`auth.refresh` | 无 | `response`，刷新当前 WebSocket 认证 |
+| catalog/chat/search/feedback/archive/automation/memory/viewport | JSON | 已注册 WS route 返回 `response`；完整列表见 [WebSocket 协议](websocket-protocol.md) |
+| terminal 控制面 | 无 | 已注册 WS route 返回 `response` |
 | `GET /api/resource` | 文件内容 | `response`，用于网关/资源协商，不是二进制直传 |
 | `POST /api/upload` | multipart 上传 + JSON | WS 形态用于网关下载/拉取协商；浏览器文件上传仍优先使用 HTTP |

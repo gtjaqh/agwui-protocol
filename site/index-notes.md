@@ -20,3 +20,4 @@
 - 协议定义应维护在 `docs/reference/`
 - 交互主线应维护在 `docs/overview/` 与 `docs/guides/`
 - 辅助视觉页应维护在 `docs/visuals/`
+- WebSocket route 以 `agent-platform` 当前注册表为准，正式清单维护在 `docs/reference/websocket-protocol.md`
